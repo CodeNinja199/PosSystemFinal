@@ -41,6 +41,54 @@ public class ProductsController : ControllerBase
         return Ok(productResponse);
     }
 
+    [HttpPost]
+    public IActionResult CreateProduct(CreateProductRequest createProductRequest)
+    {
+        bool doesCategoryExist = DoesCategoryExistInList(createProductRequest.CategoryId);
+        if (doesCategoryExist == false)
+        {
+            return NotFound(new { message = $"Category {createProductRequest.CategoryId} was not found." });
+        }
+
+        int nextProductId = 1;
+        foreach (Product product in InMemoryData.Products)
+        {
+            if (product.Id >= nextProductId)
+            {
+                nextProductId = product.Id + 1;
+            }
+        }
+
+        Product newProduct = new Product
+        {
+            Id = nextProductId,
+            Name = createProductRequest.Name,
+            Price = createProductRequest.Price,
+            StockQuantity = createProductRequest.StockQuantity,
+            LowStockThreshold = createProductRequest.LowStockThreshold,
+            ImageUrl = createProductRequest.ImageUrl,
+            CategoryId = createProductRequest.CategoryId
+        };
+        InMemoryData.Products.Add(newProduct);
+
+        ProductResponse productResponse = MapProductToResponse(newProduct);
+
+        return CreatedAtAction(nameof(GetProductById), new { id = newProduct.Id }, productResponse);
+    }
+
+    private static bool DoesCategoryExistInList(int categoryId)
+    {
+        foreach (Category category in InMemoryData.Categories)
+        {
+            if (category.Id == categoryId)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     private static Product? FindProductInList(int productId)
     {
         foreach (Product product in InMemoryData.Products)
