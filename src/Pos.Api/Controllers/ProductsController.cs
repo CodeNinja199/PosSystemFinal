@@ -103,6 +103,33 @@ public class ProductsController : ControllerBase
         return Ok(productResponse);
     }
 
+    [HttpPatch("{id}/stock")]
+    public IActionResult AdjustStock(int id, AdjustStockRequest adjustStockRequest)
+    {
+        if (adjustStockRequest.Change == 0)
+        {
+            return BadRequest(new { message = "Change must not be zero." });
+        }
+
+        Product? productFromList = FindProductInList(id);
+        if (productFromList == null)
+        {
+            return NotFound(new { message = $"Product {id} was not found." });
+        }
+
+        int newStockQuantity = productFromList.StockQuantity + adjustStockRequest.Change;
+        if (newStockQuantity < 0)
+        {
+            return Conflict(new { message = $"Stock of {productFromList.Name} cannot go below zero." });
+        }
+
+        productFromList.StockQuantity = newStockQuantity;
+
+        ProductResponse productResponse = MapProductToResponse(productFromList);
+
+        return Ok(productResponse);
+    }
+
     private static bool DoesCategoryExistInList(int categoryId)
     {
         foreach (Category category in InMemoryData.Categories)
