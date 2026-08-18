@@ -76,6 +76,33 @@ public class ProductsController : ControllerBase
         return CreatedAtAction(nameof(GetProductById), new { id = newProduct.Id }, productResponse);
     }
 
+    [HttpPut("{id}")]
+    public IActionResult UpdateProduct(int id, UpdateProductRequest updateProductRequest)
+    {
+        Product? productFromList = FindProductInList(id);
+        if (productFromList == null)
+        {
+            return NotFound(new { message = $"Product {id} was not found." });
+        }
+
+        bool doesCategoryExist = DoesCategoryExistInList(updateProductRequest.CategoryId);
+        if (doesCategoryExist == false)
+        {
+            return NotFound(new { message = $"Category {updateProductRequest.CategoryId} was not found." });
+        }
+
+        productFromList.Name = updateProductRequest.Name;
+        productFromList.Price = updateProductRequest.Price;
+        productFromList.StockQuantity = updateProductRequest.StockQuantity;
+        productFromList.LowStockThreshold = updateProductRequest.LowStockThreshold;
+        productFromList.ImageUrl = updateProductRequest.ImageUrl;
+        productFromList.CategoryId = updateProductRequest.CategoryId;
+
+        ProductResponse productResponse = MapProductToResponse(productFromList);
+
+        return Ok(productResponse);
+    }
+
     private static bool DoesCategoryExistInList(int categoryId)
     {
         foreach (Category category in InMemoryData.Categories)
