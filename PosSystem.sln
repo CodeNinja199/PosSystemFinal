@@ -7,6 +7,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{827E0CD3-B72
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pos.Domain", "src\Pos.Domain\Pos.Domain.csproj", "{CBE04F08-1A5F-4547-9036-43DF5987C862}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pos.Api", "src\Pos.Api\Pos.Api.csproj", "{2A64BEB8-288E-4D78-AE55-7B5D5ED5617F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -29,11 +31,24 @@ Global
 		{CBE04F08-1A5F-4547-9036-43DF5987C862}.Release|x64.Build.0 = Release|Any CPU
 		{CBE04F08-1A5F-4547-9036-43DF5987C862}.Release|x86.ActiveCfg = Release|Any CPU
 		{CBE04F08-1A5F-4547-9036-43DF5987C862}.Release|x86.Build.0 = Release|Any CPU
+		{2A64BEB8-288E-4D78-AE55-7B5D5ED5617F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2A64BEB8-288E-4D78-AE55-7B5D5ED5617F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2A64BEB8-288E-4D78-AE55-7B5D5ED5617F}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{2A64BEB8-288E-4D78-AE55-7B5D5ED5617F}.Debug|x64.Build.0 = Debug|Any CPU
+		{2A64BEB8-288E-4D78-AE55-7B5D5ED5617F}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{2A64BEB8-288E-4D78-AE55-7B5D5ED5617F}.Debug|x86.Build.0 = Debug|Any CPU
+		{2A64BEB8-288E-4D78-AE55-7B5D5ED5617F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2A64BEB8-288E-4D78-AE55-7B5D5ED5617F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2A64BEB8-288E-4D78-AE55-7B5D5ED5617F}.Release|x64.ActiveCfg = Release|Any CPU
+		{2A64BEB8-288E-4D78-AE55-7B5D5ED5617F}.Release|x64.Build.0 = Release|Any CPU
+		{2A64BEB8-288E-4D78-AE55-7B5D5ED5617F}.Release|x86.ActiveCfg = Release|Any CPU
+		{2A64BEB8-288E-4D78-AE55-7B5D5ED5617F}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{CBE04F08-1A5F-4547-9036-43DF5987C862} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
+		{2A64BEB8-288E-4D78-AE55-7B5D5ED5617F} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 	EndGlobalSection
 EndGlobal
