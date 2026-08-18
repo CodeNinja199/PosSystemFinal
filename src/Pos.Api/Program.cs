@@ -1,8 +1,14 @@
+using Pos.Api;
+
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .ConfigureApiBehaviorOptions(options =>
+    {
+        options.InvalidModelStateResponseFactory = ValidationErrorResponseFactory.CreateResponse;
+    });
 
 // Swagger setup follows the Swashbuckle.AspNetCore README "Getting Started" steps.
 builder.Services.AddSwaggerGen();
