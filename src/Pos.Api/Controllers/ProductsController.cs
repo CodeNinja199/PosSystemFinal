@@ -130,6 +130,20 @@ public class ProductsController : ControllerBase
         return Ok(productResponse);
     }
 
+    [HttpDelete("{id}")]
+    public IActionResult DeleteProduct(int id)
+    {
+        Product? productFromList = FindProductInList(id);
+        if (productFromList == null)
+        {
+            return NotFound(new { message = $"Product {id} was not found." });
+        }
+
+        InMemoryData.Products.Remove(productFromList);
+
+        return NoContent();
+    }
+
     private static bool DoesCategoryExistInList(int categoryId)
     {
         foreach (Category category in InMemoryData.Categories)
