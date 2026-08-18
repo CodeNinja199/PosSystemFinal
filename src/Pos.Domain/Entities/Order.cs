@@ -15,4 +15,6 @@ public class Order
     public PaymentMethod PaymentMethod { get; set; }
 
     public decimal Total { get; set; }
+
+    public List<OrderItem> Items { get; set; } = new List<OrderItem>();
 }
