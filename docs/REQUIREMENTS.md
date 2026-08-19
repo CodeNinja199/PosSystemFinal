@@ -72,8 +72,8 @@ Status codes used everywhere: 200 for a read or an update that returns data, 201
 
 ## Cart and checkout
 
-23. The cart lives in the browser only; it holds product id, name, unit price, and quantity, and its total is the sum of unit price times quantity.
-24. Any logged-in user can place an order with a list of items (product id and quantity) and a payment method of Cash or Card, and receives 201 with the order.
+23. The cart lives in the browser only; it holds product id, name, unit price, and quantity, its total is the sum of unit price times quantity, an item can be removed from it, and it is emptied after an order is placed.
+24. Any logged-in user can place an order with a list of items (product id and quantity) and a payment method of Cash or Card, and receives 201 with the order, whose status starts as Placed.
     - a. An empty item list returns 400.
     - b. An item quantity of zero or less, or above 1000, returns 400.
     - c. A payment method that is not Cash or Card returns 400.
@@ -114,5 +114,5 @@ Status codes used everywhere: 200 for a read or an update that returns data, 201
     - a. A notification that belongs to another user returns 403.
     - b. A notification id that does not exist returns 404.
 42. Messages are kept by RabbitMQ in a durable queue until the Notification API acknowledges them, so a message published while the Notification API is down is delivered when it starts again.
-43. If RabbitMQ cannot be reached, the publisher logs the failure and returns; the order that triggered it stays saved.
+43. If RabbitMQ cannot be reached, the publisher logs the failure and returns, and the order that triggered it stays saved; on the receiving side the Notification API's consumer logs the failure and stops, and Docker restarts the Notification API until RabbitMQ is back.
 
