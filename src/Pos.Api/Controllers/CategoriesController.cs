@@ -83,6 +83,39 @@ public class CategoriesController : ControllerBase
         return Ok(categoryResponse);
     }
 
+    [HttpDelete("{id}")]
+    public IActionResult DeleteCategory(int id)
+    {
+        Category? categoryFromList = FindCategoryInList(id);
+        if (categoryFromList == null)
+        {
+            return NotFound(new { message = $"Category {id} was not found." });
+        }
+
+        bool doesCategoryHaveProducts = DoesCategoryHaveProductsInList(id);
+        if (doesCategoryHaveProducts)
+        {
+            return Conflict(new { message = $"Category {categoryFromList.Name} still has products." });
+        }
+
+        InMemoryData.Categories.Remove(categoryFromList);
+
+        return NoContent();
+    }
+
+    private static bool DoesCategoryHaveProductsInList(int categoryId)
+    {
+        foreach (Product product in InMemoryData.Products)
+        {
+            if (product.CategoryId == categoryId)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     private static bool IsCategoryNameInList(string categoryName)
     {
         foreach (Category category in InMemoryData.Categories)
