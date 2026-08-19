@@ -44,6 +44,7 @@ Status codes used everywhere: 200 for a read or an update that returns data, 201
 13. An admin can edit a category's name with PUT and receives 200 with the updated category.
     - a. A blank name returns 400.
     - b. An id that does not exist in the store returns 404.
+    - c. A name already used by another category in the same store returns 409.
 14. An admin can delete a category and receives 204.
     - a. An id that does not exist in the store returns 404.
     - b. A category that still has products returns 409.
@@ -62,12 +63,14 @@ Status codes used everywhere: 200 for a read or an update that returns data, 201
 19. An admin can replace a product's details with PUT and receives 200 with the updated product.
     - a. The same validation failures as adding return 400.
     - b. An id that does not exist in the store returns 404.
+    - c. A category id that does not exist in the store returns 404.
 20. An admin can adjust a product's stock with PATCH by sending a positive or negative change and receives 200 with the new quantity.
     - a. A change of zero returns 400.
     - b. A change that would take the stock below zero returns 409.
     - c. An id that does not exist in the store returns 404.
 21. An admin can delete a product and receives 204.
     - a. An id that does not exist in the store returns 404.
+    - b. A product that appears in an existing order returns 409, so old receipts keep their lines.
 22. A product is low on stock when its stock quantity is below or equal to its low-stock threshold after an order takes stock away.
 
 ## Cart and checkout
@@ -76,7 +79,7 @@ Status codes used everywhere: 200 for a read or an update that returns data, 201
 24. Any logged-in user can place an order with a list of items (product id and quantity) and a payment method of Cash or Card, and receives 201 with the order, whose status starts as Placed.
     - a. An empty item list returns 400.
     - b. An item quantity of zero or less, or above 1000, returns 400.
-    - c. A payment method that is not Cash or Card returns 400.
+    - c. A missing payment method, or one that is not Cash or Card, returns 400.
     - d. The same product listed twice in one order returns 400.
     - e. A product id that does not exist in the caller's store returns 404.
     - f. A quantity higher than the product's stock returns 409 with a message naming the product.
