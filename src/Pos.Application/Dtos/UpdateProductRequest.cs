@@ -1,8 +1,8 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace Pos.Api.Dtos;
+namespace Pos.Application.Dtos;
 
-public class CreateProductRequest
+public class UpdateProductRequest
 {
     [Required]
     [MaxLength(100)]

@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace Pos.Api.Dtos;
+namespace Pos.Application.Dtos;
 
 public class CreateCategoryRequest
 {

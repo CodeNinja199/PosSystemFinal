@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Pos.Api.Data;
-using Pos.Api.Dtos;
+using Pos.Application.Dtos;
 using Pos.Domain.Entities;
 
 namespace Pos.Api.Controllers;
