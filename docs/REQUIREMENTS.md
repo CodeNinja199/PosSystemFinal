@@ -2,7 +2,7 @@
 
 Every feature of the POS system, written as a numbered plain sentence before its code exists. Each feature lists its unhappy paths with the status code the API returns, because every unhappy path becomes a test in the testing phase. Store rules apply from the system-design phase on; before it, there is one store and no store filter.
 
-Status codes used everywhere: 200 for a read or an update that returns data, 201 for a create, 204 for a delete or an action with no body, 400 for a request that fails validation, 401 for a missing or bad token, 403 for a logged-in user who may not do this, 404 for a record that does not exist in the caller's store, 409 for a rule conflict, 500 for anything unexpected. Every error body is `{ "message": "..." }`.
+Status codes used everywhere: 200 for a read or an update that returns data, 201 for a create, 204 for a delete or an action with no body, 400 for a request that fails validation, 401 for a missing or bad token, 403 for a logged-in user who may not do this, 404 for a record that does not exist in the caller's store, 409 for a rule conflict, 500 for anything unexpected. Every error body is `{ "message": "..." }`, including the automatic 400 from DataAnnotations, which the API reshapes into that body.
 
 ## Accounts
 
@@ -31,7 +31,7 @@ Status codes used everywhere: 200 for a read or an update that returns data, 201
 7. The system serves more than one store from one database; every user, category, product, and order belongs to exactly one store.
 8. Anyone can read the list of stores (id and name) without logging in, because registration needs it.
 9. The store id used by every protected endpoint comes from the token, never from the request body or the query string.
-   - a. An admin of one store asking for a product, category, order, or customer of another store receives 404, as if it did not exist.
+   - a. An admin of one store asking for a product, category, or order of another store receives 404, as if it did not exist; every list (products, categories, orders, customers) only ever contains the admin's own store.
 10. The seed loader creates two stores when the stores table is empty, each with one admin, one cashier, a few categories, and a few products, from a JSON file.
 
 ## Categories
