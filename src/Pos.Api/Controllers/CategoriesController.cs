@@ -37,6 +37,50 @@ public class CategoriesController : ControllerBase
         return Ok(categoryResponse);
     }
 
+    [HttpPost]
+    public IActionResult CreateCategory(CreateCategoryRequest createCategoryRequest)
+    {
+        bool isNameAlreadyUsed = IsCategoryNameInList(createCategoryRequest.Name);
+        if (isNameAlreadyUsed)
+        {
+            return Conflict(new { message = $"A category named {createCategoryRequest.Name} already exists." });
+        }
+
+        int nextCategoryId = 1;
+        foreach (Category category in InMemoryData.Categories)
+        {
+            if (category.Id >= nextCategoryId)
+            {
+                nextCategoryId = category.Id + 1;
+            }
+        }
+
+        Category newCategory = new Category
+        {
+            Id = nextCategoryId,
+            Name = createCategoryRequest.Name
+        };
+        InMemoryData.Categories.Add(newCategory);
+
+        CategoryResponse categoryResponse = MapCategoryToResponse(newCategory);
+
+        return CreatedAtAction(nameof(GetCategoryById), new { id = newCategory.Id }, categoryResponse);
+    }
+
+    private static bool IsCategoryNameInList(string categoryName)
+    {
+        foreach (Category category in InMemoryData.Categories)
+        {
+            bool isSameName = string.Equals(category.Name, categoryName, StringComparison.OrdinalIgnoreCase);
+            if (isSameName)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     private static Category? FindCategoryInList(int categoryId)
     {
         foreach (Category category in InMemoryData.Categories)
