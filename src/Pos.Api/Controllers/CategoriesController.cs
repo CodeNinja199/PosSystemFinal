@@ -67,6 +67,22 @@ public class CategoriesController : ControllerBase
         return CreatedAtAction(nameof(GetCategoryById), new { id = newCategory.Id }, categoryResponse);
     }
 
+    [HttpPut("{id}")]
+    public IActionResult UpdateCategory(int id, UpdateCategoryRequest updateCategoryRequest)
+    {
+        Category? categoryFromList = FindCategoryInList(id);
+        if (categoryFromList == null)
+        {
+            return NotFound(new { message = $"Category {id} was not found." });
+        }
+
+        categoryFromList.Name = updateCategoryRequest.Name;
+
+        CategoryResponse categoryResponse = MapCategoryToResponse(categoryFromList);
+
+        return Ok(categoryResponse);
+    }
+
     private static bool IsCategoryNameInList(string categoryName)
     {
         foreach (Category category in InMemoryData.Categories)
