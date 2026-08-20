@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
-using Pos.Api.Data;
 using Pos.Application.Dtos;
-using Pos.Domain.Entities;
+using Pos.Application.Services;
 
 namespace Pos.Api.Controllers;
 
@@ -9,148 +8,50 @@ namespace Pos.Api.Controllers;
 [Route("api/[controller]")]
 public class CategoriesController : ControllerBase
 {
-    [HttpGet]
-    public IActionResult GetCategories()
-    {
-        List<CategoryResponse> categoriesToReturn = new List<CategoryResponse>();
-        foreach (Category category in InMemoryData.Categories)
-        {
-            CategoryResponse categoryResponse = MapCategoryToResponse(category);
-            categoriesToReturn.Add(categoryResponse);
-        }
+    private readonly CategoryService _categoryService;
 
-        return Ok(categoriesToReturn);
+    public CategoriesController(CategoryService categoryService)
+    {
+        _categoryService = categoryService;
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> GetCategories()
+    {
+        List<CategoryResponse> categories = await _categoryService.GetCategoriesAsync();
+
+        return Ok(categories);
     }
 
     [HttpGet("{id}")]
-    public IActionResult GetCategoryById(int id)
+    public async Task<IActionResult> GetCategoryById(int id)
     {
-        Category? categoryFromList = FindCategoryInList(id);
+        CategoryResponse category = await _categoryService.GetCategoryByIdAsync(id);
 
-        if (categoryFromList == null)
-        {
-            return NotFound(new { message = $"Category {id} was not found." });
-        }
-
-        CategoryResponse categoryResponse = MapCategoryToResponse(categoryFromList);
-
-        return Ok(categoryResponse);
+        return Ok(category);
     }
 
     [HttpPost]
-    public IActionResult CreateCategory(CreateCategoryRequest createCategoryRequest)
+    public async Task<IActionResult> CreateCategory(CreateCategoryRequest createCategoryRequest)
     {
-        bool isNameAlreadyUsed = IsCategoryNameInList(createCategoryRequest.Name);
-        if (isNameAlreadyUsed)
-        {
-            return Conflict(new { message = $"A category named {createCategoryRequest.Name} already exists." });
-        }
+        CategoryResponse createdCategory = await _categoryService.CreateCategoryAsync(createCategoryRequest);
 
-        int nextCategoryId = 1;
-        foreach (Category category in InMemoryData.Categories)
-        {
-            if (category.Id >= nextCategoryId)
-            {
-                nextCategoryId = category.Id + 1;
-            }
-        }
-
-        Category newCategory = new Category
-        {
-            Id = nextCategoryId,
-            Name = createCategoryRequest.Name
-        };
-        InMemoryData.Categories.Add(newCategory);
-
-        CategoryResponse categoryResponse = MapCategoryToResponse(newCategory);
-
-        return CreatedAtAction(nameof(GetCategoryById), new { id = newCategory.Id }, categoryResponse);
+        return CreatedAtAction(nameof(GetCategoryById), new { id = createdCategory.Id }, createdCategory);
     }
 
     [HttpPut("{id}")]
-    public IActionResult UpdateCategory(int id, UpdateCategoryRequest updateCategoryRequest)
+    public async Task<IActionResult> UpdateCategory(int id, UpdateCategoryRequest updateCategoryRequest)
     {
-        Category? categoryFromList = FindCategoryInList(id);
-        if (categoryFromList == null)
-        {
-            return NotFound(new { message = $"Category {id} was not found." });
-        }
+        CategoryResponse updatedCategory = await _categoryService.UpdateCategoryAsync(id, updateCategoryRequest);
 
-        categoryFromList.Name = updateCategoryRequest.Name;
-
-        CategoryResponse categoryResponse = MapCategoryToResponse(categoryFromList);
-
-        return Ok(categoryResponse);
+        return Ok(updatedCategory);
     }
 
     [HttpDelete("{id}")]
-    public IActionResult DeleteCategory(int id)
+    public async Task<IActionResult> DeleteCategory(int id)
     {
-        Category? categoryFromList = FindCategoryInList(id);
-        if (categoryFromList == null)
-        {
-            return NotFound(new { message = $"Category {id} was not found." });
-        }
-
-        bool doesCategoryHaveProducts = DoesCategoryHaveProductsInList(id);
-        if (doesCategoryHaveProducts)
-        {
-            return Conflict(new { message = $"Category {categoryFromList.Name} still has products." });
-        }
-
-        InMemoryData.Categories.Remove(categoryFromList);
+        await _categoryService.DeleteCategoryAsync(id);
 
         return NoContent();
-    }
-
-    private static bool DoesCategoryHaveProductsInList(int categoryId)
-    {
-        foreach (Product product in InMemoryData.Products)
-        {
-            if (product.CategoryId == categoryId)
-            {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    private static bool IsCategoryNameInList(string categoryName)
-    {
-        foreach (Category category in InMemoryData.Categories)
-        {
-            bool isSameName = string.Equals(category.Name, categoryName, StringComparison.OrdinalIgnoreCase);
-            if (isSameName)
-            {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    private static Category? FindCategoryInList(int categoryId)
-    {
-        foreach (Category category in InMemoryData.Categories)
-        {
-            if (category.Id == categoryId)
-            {
-                return category;
-            }
-        }
-
-        return null;
-    }
-
-    private static CategoryResponse MapCategoryToResponse(Category category)
-    {
-        CategoryResponse categoryResponse = new CategoryResponse
-        {
-            Id = category.Id,
-            Name = category.Name
-        };
-
-        return categoryResponse;
     }
 }
