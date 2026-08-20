@@ -1,7 +1,9 @@
+using Microsoft.EntityFrameworkCore;
 using Pos.Api;
 using Pos.Api.Middleware;
 using Pos.Application.Interfaces;
 using Pos.Application.Services;
+using Pos.Infrastructure.Data;
 using Pos.Infrastructure.Repositories;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
@@ -16,6 +18,18 @@ builder.Services.AddControllers()
 
 // Swagger setup follows the Swashbuckle.AspNetCore README "Getting Started" steps.
 builder.Services.AddSwaggerGen();
+
+// The connection string comes from user-secrets locally and from an environment variable in Docker; it is never in appsettings.json.
+string? posDatabaseConnectionString = builder.Configuration.GetConnectionString("PosDatabase");
+if (posDatabaseConnectionString == null)
+{
+    throw new InvalidOperationException("ConnectionStrings:PosDatabase is not configured.");
+}
+
+builder.Services.AddDbContext<PosDbContext>(options =>
+{
+    options.UseSqlServer(posDatabaseConnectionString);
+});
 
 // Application services: scoped, so one request shares one instance of each.
 builder.Services.AddScoped<CategoryService>();
