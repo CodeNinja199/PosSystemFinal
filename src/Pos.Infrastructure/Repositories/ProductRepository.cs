@@ -42,6 +42,15 @@ public class ProductRepository : IProductRepository
         return productFromDatabase;
     }
 
+    public async Task<List<Product>> GetProductsByIdsAsync(List<int> productIds)
+    {
+        List<Product> productsFromDatabase = await _context.Products
+            .Where(product => productIds.Contains(product.Id))
+            .ToListAsync();
+
+        return productsFromDatabase;
+    }
+
     public async Task<Product> AddProductAsync(Product product)
     {
         _context.Products.Add(product);
