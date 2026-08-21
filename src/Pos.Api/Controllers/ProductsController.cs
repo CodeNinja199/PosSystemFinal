@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 using Pos.Application.Dtos;
@@ -16,6 +17,7 @@ public class ProductsController : ControllerBase
         _productService = productService;
     }
 
+    [Authorize]
     [HttpGet]
     public async Task<IActionResult> GetProducts(int? categoryId)
     {
@@ -24,6 +26,7 @@ public class ProductsController : ControllerBase
         return Ok(products);
     }
 
+    [Authorize]
     [HttpGet("{id}")]
     public async Task<IActionResult> GetProductById(int id)
     {
@@ -32,6 +35,7 @@ public class ProductsController : ControllerBase
         return Ok(product);
     }
 
+    [Authorize(Roles = "Admin")]
     [HttpPost]
     public async Task<IActionResult> CreateProduct(CreateProductRequest createProductRequest)
     {
@@ -40,6 +44,7 @@ public class ProductsController : ControllerBase
         return CreatedAtAction(nameof(GetProductById), new { id = createdProduct.Id }, createdProduct);
     }
 
+    [Authorize(Roles = "Admin")]
     [HttpPut("{id}")]
     public async Task<IActionResult> UpdateProduct(int id, UpdateProductRequest updateProductRequest)
     {
@@ -48,6 +53,7 @@ public class ProductsController : ControllerBase
         return Ok(updatedProduct);
     }
 
+    [Authorize(Roles = "Admin")]
     [HttpPatch("{id}/stock")]
     public async Task<IActionResult> AdjustStock(int id, AdjustStockRequest adjustStockRequest)
     {
@@ -56,6 +62,7 @@ public class ProductsController : ControllerBase
         return Ok(updatedProduct);
     }
 
+    [Authorize(Roles = "Admin")]
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteProduct(int id)
     {

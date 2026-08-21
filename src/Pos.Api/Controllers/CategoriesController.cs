@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 using Pos.Application.Dtos;
@@ -16,6 +17,7 @@ public class CategoriesController : ControllerBase
         _categoryService = categoryService;
     }
 
+    [Authorize]
     [HttpGet]
     public async Task<IActionResult> GetCategories()
     {
@@ -24,6 +26,7 @@ public class CategoriesController : ControllerBase
         return Ok(categories);
     }
 
+    [Authorize]
     [HttpGet("{id}")]
     public async Task<IActionResult> GetCategoryById(int id)
     {
@@ -32,6 +35,7 @@ public class CategoriesController : ControllerBase
         return Ok(category);
     }
 
+    [Authorize(Roles = "Admin")]
     [HttpPost]
     public async Task<IActionResult> CreateCategory(CreateCategoryRequest createCategoryRequest)
     {
@@ -40,6 +44,7 @@ public class CategoriesController : ControllerBase
         return CreatedAtAction(nameof(GetCategoryById), new { id = createdCategory.Id }, createdCategory);
     }
 
+    [Authorize(Roles = "Admin")]
     [HttpPut("{id}")]
     public async Task<IActionResult> UpdateCategory(int id, UpdateCategoryRequest updateCategoryRequest)
     {
@@ -48,6 +53,7 @@ public class CategoriesController : ControllerBase
         return Ok(updatedCategory);
     }
 
+    [Authorize(Roles = "Admin")]
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteCategory(int id)
     {
