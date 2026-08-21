@@ -35,9 +35,9 @@ builder.Services.AddDbContext<PosDbContext>(options =>
 builder.Services.AddScoped<CategoryService>();
 builder.Services.AddScoped<ProductService>();
 
-// Infrastructure repositories: singletons while the data lives in lists inside them.
+// Infrastructure repositories: scoped, like the DbContext they hold.
 builder.Services.AddScoped<IProductRepository, ProductRepository>();
-builder.Services.AddSingleton<ICategoryRepository, InMemoryCategoryRepository>();
+builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
 
 WebApplication app = builder.Build();
 
