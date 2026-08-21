@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
     <ProjectReference Include="..\Pos.Application\Pos.Application.csproj" />
@@ -13,5 +13,9 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Update="SeedData\seed-data.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
 
 </Project>

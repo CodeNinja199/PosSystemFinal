@@ -5,6 +5,7 @@ using Pos.Application.Interfaces;
 using Pos.Application.Services;
 using Pos.Infrastructure.Data;
 using Pos.Infrastructure.Repositories;
+using Pos.Infrastructure.SeedData;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
@@ -38,8 +39,16 @@ builder.Services.AddScoped<ProductService>();
 // Infrastructure repositories: scoped, like the DbContext they hold.
 builder.Services.AddScoped<IProductRepository, ProductRepository>();
 builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
+builder.Services.AddScoped<SeedDataLoader>();
 
 WebApplication app = builder.Build();
+
+// Fill an empty database once, before the API starts listening. The scope gives the loader its own DbContext.
+using (IServiceScope seedScope = app.Services.CreateScope())
+{
+    SeedDataLoader seedDataLoader = seedScope.ServiceProvider.GetRequiredService<SeedDataLoader>();
+    await seedDataLoader.LoadAsync();
+}
 
 // Configure the HTTP request pipeline. Error handling comes first so it wraps everything after it.
 app.UseMiddleware<ErrorHandlingMiddleware>();
