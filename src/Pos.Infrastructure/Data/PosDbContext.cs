@@ -19,6 +19,14 @@ public class PosDbContext : DbContext
         }
     }
 
+    public DbSet<User> Users
+    {
+        get
+        {
+            return Set<User>();
+        }
+    }
+
     public DbSet<Product> Products
     {
         get
@@ -29,6 +37,19 @@ public class PosDbContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        modelBuilder.Entity<User>()
+            .Property(user => user.FullName)
+            .HasMaxLength(100);
+
+        modelBuilder.Entity<User>()
+            .Property(user => user.Email)
+            .HasMaxLength(200);
+
+        // Two users can never share an email; the database enforces what AuthService checks first.
+        modelBuilder.Entity<User>()
+            .HasIndex(user => user.Email)
+            .IsUnique();
+
         modelBuilder.Entity<Category>()
             .Property(category => category.Name)
             .HasMaxLength(60);
