@@ -11,5 +11,9 @@
     { "name": "Chocolate bar", "price": 150, "stockQuantity": 8, "lowStockThreshold": 10, "imageUrl": null, "categoryName": "Snacks" },
     { "name": "Ballpoint pen", "price": 40, "stockQuantity": 500, "lowStockThreshold": 50, "imageUrl": null, "categoryName": "Stationery" },
     { "name": "Notebook A5", "price": 220, "stockQuantity": 45, "lowStockThreshold": 15, "imageUrl": null, "categoryName": "Stationery" }
+  ],
+  "users": [
+    { "fullName": "Store Admin", "email": "admin@pos.local", "role": "Admin" },
+    { "fullName": "Store Cashier", "email": "cashier@pos.local", "role": "Cashier" }
   ]
 }
