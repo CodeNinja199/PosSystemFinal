@@ -1,12 +1,16 @@
+using System.Text;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi;
 using Pos.Api;
 using Pos.Api.Middleware;
 using Pos.Application.Interfaces;
 using Pos.Application.Services;
 using Pos.Infrastructure.Data;
 using Pos.Infrastructure.Repositories;
-using Pos.Infrastructure.SeedData;
 using Pos.Infrastructure.Security;
+using Pos.Infrastructure.SeedData;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
@@ -18,8 +22,22 @@ builder.Services.AddControllers()
         options.InvalidModelStateResponseFactory = ValidationErrorResponseFactory.CreateResponse;
     });
 
-// Swagger setup follows the Swashbuckle.AspNetCore README "Getting Started" steps.
-builder.Services.AddSwaggerGen();
+// Swagger setup follows the Swashbuckle.AspNetCore README: "Getting Started" plus the bearer security definition
+// that adds the Authorize button, so every endpoint can be tried with a token.
+builder.Services.AddSwaggerGen(options =>
+{
+    options.AddSecurityDefinition("bearer", new OpenApiSecurityScheme
+    {
+        Type = SecuritySchemeType.Http,
+        Scheme = "bearer",
+        BearerFormat = "JWT",
+        Description = "Paste the token from POST api/auth/login."
+    });
+    options.AddSecurityRequirement(document => new OpenApiSecurityRequirement
+    {
+        [new OpenApiSecuritySchemeReference("bearer", document)] = new List<string>()
+    });
+});
 
 // The connection string comes from user-secrets locally and from an environment variable in Docker; it is never in appsettings.json.
 string? posDatabaseConnectionString = builder.Configuration.GetConnectionString("PosDatabase");
@@ -39,6 +57,25 @@ if (jwtSettings == null || jwtSettings.Secret.Length < 32)
 {
     throw new InvalidOperationException("Jwt:Secret must be configured with at least 32 characters.");
 }
+
+// Token validation settings follow the Microsoft docs page on JWT bearer authentication in ASP.NET Core.
+// ValidAlgorithms pins HS256 so a token signed any other way is rejected (the "algorithm confusion" attack).
+byte[] jwtSecretBytes = Encoding.UTF8.GetBytes(jwtSettings.Secret);
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidIssuer = jwtSettings.Issuer,
+            ValidateAudience = true,
+            ValidAudience = jwtSettings.Audience,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(jwtSecretBytes),
+            ValidAlgorithms = new List<string> { SecurityAlgorithms.HmacSha256 }
+        };
+    });
 
 // Application services: scoped, so one request shares one instance of each.
 builder.Services.AddScoped<AuthService>();
@@ -74,6 +111,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+// Authentication reads the token and sets User; authorization then checks [Authorize], so this order is fixed.
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
