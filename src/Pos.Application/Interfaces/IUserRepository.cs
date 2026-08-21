@@ -1,0 +1,15 @@
+using Pos.Domain.Entities;
+
+namespace Pos.Application.Interfaces;
+
+// Implemented by UserRepository in Infrastructure. Used by AuthService for registration and login.
+public interface IUserRepository
+{
+    Task<User?> GetUserByEmailAsync(string email);
+
+    Task<User?> GetUserByIdAsync(int userId);
+
+    Task<bool> IsEmailRegisteredAsync(string email);
+
+    Task<User> AddUserAsync(User user);
+}
