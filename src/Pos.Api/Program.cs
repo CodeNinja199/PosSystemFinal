@@ -36,7 +36,7 @@ builder.Services.AddScoped<CategoryService>();
 builder.Services.AddScoped<ProductService>();
 
 // Infrastructure repositories: singletons while the data lives in lists inside them.
-builder.Services.AddSingleton<IProductRepository, InMemoryProductRepository>();
+builder.Services.AddScoped<IProductRepository, ProductRepository>();
 builder.Services.AddSingleton<ICategoryRepository, InMemoryCategoryRepository>();
 
 WebApplication app = builder.Build();
