@@ -6,6 +6,7 @@ using Pos.Application.Services;
 using Pos.Infrastructure.Data;
 using Pos.Infrastructure.Repositories;
 using Pos.Infrastructure.SeedData;
+using Pos.Infrastructure.Security;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
@@ -33,13 +34,18 @@ builder.Services.AddDbContext<PosDbContext>(options =>
 });
 
 // Application services: scoped, so one request shares one instance of each.
+builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<CategoryService>();
 builder.Services.AddScoped<ProductService>();
 
 // Infrastructure repositories: scoped, like the DbContext they hold.
 builder.Services.AddScoped<IProductRepository, ProductRepository>();
 builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
+builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<SeedDataLoader>();
+
+// Infrastructure tools: the hasher keeps no state, so one instance can serve every request.
+builder.Services.AddSingleton<IPasswordHasher, BcryptPasswordHasher>();
 
 WebApplication app = builder.Build();
 
