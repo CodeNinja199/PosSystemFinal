@@ -33,6 +33,13 @@ builder.Services.AddDbContext<PosDbContext>(options =>
     options.UseSqlServer(posDatabaseConnectionString);
 });
 
+// The Jwt section: Issuer and Audience from appsettings.json, Secret from user-secrets. One object for the whole app.
+JwtSettings? jwtSettings = builder.Configuration.GetSection("Jwt").Get<JwtSettings>();
+if (jwtSettings == null || jwtSettings.Secret.Length < 32)
+{
+    throw new InvalidOperationException("Jwt:Secret must be configured with at least 32 characters.");
+}
+
 // Application services: scoped, so one request shares one instance of each.
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<CategoryService>();
@@ -46,6 +53,8 @@ builder.Services.AddScoped<SeedDataLoader>();
 
 // Infrastructure tools: the hasher keeps no state, so one instance can serve every request.
 builder.Services.AddSingleton<IPasswordHasher, BcryptPasswordHasher>();
+builder.Services.AddSingleton(jwtSettings);
+builder.Services.AddSingleton<ILoginTokenCreator, JwtLoginTokenCreator>();
 
 WebApplication app = builder.Build();
 

@@ -22,4 +22,12 @@ public class AuthController : ControllerBase
 
         return StatusCode(StatusCodes.Status201Created, registeredUser);
     }
+
+    [HttpPost("login")]
+    public async Task<IActionResult> Login(LoginRequest loginRequest)
+    {
+        LoginResponse loginResponse = await _authService.LoginAsync(loginRequest);
+
+        return Ok(loginResponse);
+    }
 }
