@@ -1,0 +1,121 @@
+using Pos.Application.Dtos;
+using Pos.Application.Exceptions;
+using Pos.Application.Interfaces;
+using Pos.Domain.Entities;
+using Pos.Domain.Enums;
+
+namespace Pos.Application.Services;
+
+// Called by OrdersController after the [Authorize] check passes. Holds the checkout and order rules.
+public class OrderService
+{
+    private readonly IOrderRepository _orderRepository;
+    private readonly IProductRepository _productRepository;
+
+    public OrderService(IOrderRepository orderRepository, IProductRepository productRepository)
+    {
+        _orderRepository = orderRepository;
+        _productRepository = productRepository;
+    }
+
+    // Order of work: check every line -> build the order and reduce stock -> one save. Nothing is written before every check passes.
+    public async Task<OrderResponse> PlaceOrderAsync(PlaceOrderRequest placeOrderRequest, int currentUserId)
+    {
+        HashSet<int> productIdsSeen = new HashSet<int>();
+        foreach (OrderItemRequest orderItemRequest in placeOrderRequest.Items)
+        {
+            bool isFirstTimeSeen = productIdsSeen.Add(orderItemRequest.ProductId);
+            if (isFirstTimeSeen == false)
+            {
+                throw new ValidationException($"Product {orderItemRequest.ProductId} is listed more than once.");
+            }
+        }
+
+        List<int> requestedProductIds = new List<int>(productIdsSeen);
+        List<Product> productsFromRepository = await _productRepository.GetProductsByIdsAsync(requestedProductIds);
+
+        Dictionary<int, Product> productsById = new Dictionary<int, Product>();
+        foreach (Product product in productsFromRepository)
+        {
+            productsById.Add(product.Id, product);
+        }
+
+        if (placeOrderRequest.PaymentMethod == null)
+        {
+            throw new ValidationException("A payment method is required.");
+        }
+
+        Order newOrder = new Order
+        {
+            UserId = currentUserId,
+            PlacedAt = DateTime.UtcNow,
+            Status = OrderStatus.Placed,
+            PaymentMethod = placeOrderRequest.PaymentMethod.Value,
+            Total = 0
+        };
+
+        foreach (OrderItemRequest orderItemRequest in placeOrderRequest.Items)
+        {
+            bool doesProductExist = productsById.ContainsKey(orderItemRequest.ProductId);
+            if (doesProductExist == false)
+            {
+                throw new NotFoundException($"Product {orderItemRequest.ProductId} was not found.");
+            }
+
+            Product productForItem = productsById[orderItemRequest.ProductId];
+            bool hasEnoughStock = productForItem.StockQuantity >= orderItemRequest.Quantity;
+            if (hasEnoughStock == false)
+            {
+                throw new ConflictException($"Not enough stock of {productForItem.Name}: {productForItem.StockQuantity} left.");
+            }
+
+            OrderItem orderItem = new OrderItem
+            {
+                ProductId = productForItem.Id,
+                ProductName = productForItem.Name,
+                UnitPrice = productForItem.Price,
+                Quantity = orderItemRequest.Quantity
+            };
+            newOrder.Items.Add(orderItem);
+            newOrder.Total = newOrder.Total + productForItem.Price * orderItemRequest.Quantity;
+
+            productForItem.StockQuantity = productForItem.StockQuantity - orderItemRequest.Quantity;
+        }
+
+        await _orderRepository.SaveNewOrderAsync(newOrder);
+
+        OrderResponse orderResponse = MapOrderToResponse(newOrder);
+
+        return orderResponse;
+    }
+
+    private static OrderResponse MapOrderToResponse(Order order)
+    {
+        List<OrderItemResponse> itemResponses = new List<OrderItemResponse>();
+        foreach (OrderItem orderItem in order.Items)
+        {
+            OrderItemResponse itemResponse = new OrderItemResponse
+            {
+                ProductId = orderItem.ProductId,
+                ProductName = orderItem.ProductName,
+                UnitPrice = orderItem.UnitPrice,
+                Quantity = orderItem.Quantity,
+                LineTotal = orderItem.UnitPrice * orderItem.Quantity
+            };
+            itemResponses.Add(itemResponse);
+        }
+
+        OrderResponse orderResponse = new OrderResponse
+        {
+            Id = order.Id,
+            UserId = order.UserId,
+            PlacedAt = order.PlacedAt,
+            Status = order.Status.ToString(),
+            PaymentMethod = order.PaymentMethod.ToString(),
+            Total = order.Total,
+            Items = itemResponses
+        };
+
+        return orderResponse;
+    }
+}
