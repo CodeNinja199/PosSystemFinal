@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Pos.Application.Dtos;
 using Pos.Application.Services;
+using Pos.Domain.Enums;
 
 namespace Pos.Api.Controllers;
 
@@ -28,6 +29,29 @@ public class OrdersController : ControllerBase
         return StatusCode(StatusCodes.Status201Created, placedOrder);
     }
 
+    [Authorize]
+    [HttpGet("mine")]
+    public async Task<IActionResult> GetMyOrders()
+    {
+        int currentUserId = GetCurrentUserId();
+
+        List<OrderResponse> myOrders = await _orderService.GetOrdersForUserAsync(currentUserId);
+
+        return Ok(myOrders);
+    }
+
+    [Authorize]
+    [HttpGet("{id}")]
+    public async Task<IActionResult> GetOrderById(int id)
+    {
+        int currentUserId = GetCurrentUserId();
+        UserRole currentUserRole = GetCurrentUserRole();
+
+        OrderResponse order = await _orderService.GetOrderByIdAsync(id, currentUserId, currentUserRole);
+
+        return Ok(order);
+    }
+
     // The user id claim was put in the token by JwtLoginTokenCreator and read back by the JWT bearer middleware.
     private int GetCurrentUserId()
     {
@@ -40,5 +64,19 @@ public class OrdersController : ControllerBase
         int currentUserId = int.Parse(userIdClaim.Value);
 
         return currentUserId;
+    }
+
+    // The role claim was put in the token by JwtLoginTokenCreator; it is the same value [Authorize(Roles = ...)] reads.
+    private UserRole GetCurrentUserRole()
+    {
+        Claim? roleClaim = User.FindFirst(ClaimTypes.Role);
+        if (roleClaim == null)
+        {
+            throw new InvalidOperationException("The token has no role claim.");
+        }
+
+        UserRole currentUserRole = Enum.Parse<UserRole>(roleClaim.Value);
+
+        return currentUserRole;
     }
 }

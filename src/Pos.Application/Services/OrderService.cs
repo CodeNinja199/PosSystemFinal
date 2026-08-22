@@ -89,6 +89,41 @@ public class OrderService
         return orderResponse;
     }
 
+    public async Task<List<OrderResponse>> GetOrdersForUserAsync(int currentUserId)
+    {
+        List<Order> ordersFromRepository = await _orderRepository.GetOrdersForUserAsync(currentUserId);
+
+        List<OrderResponse> orderResponses = new List<OrderResponse>();
+        foreach (Order order in ordersFromRepository)
+        {
+            OrderResponse orderResponse = MapOrderToResponse(order);
+            orderResponses.Add(orderResponse);
+        }
+
+        return orderResponses;
+    }
+
+    // A customer may only open their own orders; a cashier or admin may open any order of the store.
+    public async Task<OrderResponse> GetOrderByIdAsync(int orderId, int currentUserId, UserRole currentUserRole)
+    {
+        Order? orderFromRepository = await _orderRepository.GetOrderByIdAsync(orderId);
+        if (orderFromRepository == null)
+        {
+            throw new NotFoundException($"Order {orderId} was not found.");
+        }
+
+        bool isOwnOrder = orderFromRepository.UserId == currentUserId;
+        bool isStaff = currentUserRole == UserRole.Cashier || currentUserRole == UserRole.Admin;
+        if (isOwnOrder == false && isStaff == false)
+        {
+            throw new ForbiddenException("This order belongs to another customer.");
+        }
+
+        OrderResponse orderResponse = MapOrderToResponse(orderFromRepository);
+
+        return orderResponse;
+    }
+
     private static OrderResponse MapOrderToResponse(Order order)
     {
         List<OrderItemResponse> itemResponses = new List<OrderItemResponse>();
