@@ -106,6 +106,12 @@ public class ProductService
     {
         Product productFromRepository = await FindProductOrThrowAsync(productId);
 
+        bool isProductInAnyOrder = await _productRepository.IsProductInAnyOrderAsync(productId);
+        if (isProductInAnyOrder)
+        {
+            throw new ConflictException($"{productFromRepository.Name} appears in an order and cannot be deleted.");
+        }
+
         await _productRepository.DeleteProductAsync(productFromRepository);
     }
 

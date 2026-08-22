@@ -51,6 +51,14 @@ public class ProductRepository : IProductRepository
         return productsFromDatabase;
     }
 
+    public async Task<bool> IsProductInAnyOrderAsync(int productId)
+    {
+        bool isProductInAnyOrder = await _context.OrderItems
+            .AnyAsync(orderItem => orderItem.ProductId == productId);
+
+        return isProductInAnyOrder;
+    }
+
     public async Task<Product> AddProductAsync(Product product)
     {
         _context.Products.Add(product);

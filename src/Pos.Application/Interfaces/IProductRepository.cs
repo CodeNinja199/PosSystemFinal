@@ -11,6 +11,8 @@ public interface IProductRepository
 
     Task<List<Product>> GetProductsByIdsAsync(List<int> productIds);
 
+    Task<bool> IsProductInAnyOrderAsync(int productId);
+
     Task<Product> AddProductAsync(Product product);
 
     Task SaveProductAsync(Product product);
