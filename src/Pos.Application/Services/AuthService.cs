@@ -80,7 +80,7 @@ public class AuthService
             FullName = user.FullName,
             Email = user.Email,
             Role = user.Role.ToString(),
-            RegisteredAt = user.RegisteredAt
+            RegisteredAt = DateTime.SpecifyKind(user.RegisteredAt, DateTimeKind.Utc)
         };
 
         return userResponse;

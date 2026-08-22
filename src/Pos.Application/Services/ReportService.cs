@@ -49,7 +49,7 @@ public class ReportService
                 FullName = customer.FullName,
                 Email = customer.Email,
                 Role = customer.Role.ToString(),
-                RegisteredAt = customer.RegisteredAt
+                RegisteredAt = DateTime.SpecifyKind(customer.RegisteredAt, DateTimeKind.Utc)
             };
             customerResponses.Add(customerResponse);
         }

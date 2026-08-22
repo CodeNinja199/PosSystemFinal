@@ -192,7 +192,7 @@ public class OrderService
         {
             Id = order.Id,
             UserId = order.UserId,
-            PlacedAt = order.PlacedAt,
+            PlacedAt = DateTime.SpecifyKind(order.PlacedAt, DateTimeKind.Utc),
             Status = order.Status.ToString(),
             PaymentMethod = order.PaymentMethod.ToString(),
             Total = order.Total,
