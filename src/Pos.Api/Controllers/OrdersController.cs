@@ -52,6 +52,24 @@ public class OrdersController : ControllerBase
         return Ok(order);
     }
 
+    [Authorize(Roles = "Admin,Cashier")]
+    [HttpGet]
+    public async Task<IActionResult> GetAllOrders()
+    {
+        List<OrderResponse> orders = await _orderService.GetAllOrdersAsync();
+
+        return Ok(orders);
+    }
+
+    [Authorize(Roles = "Admin,Cashier")]
+    [HttpPatch("{id}/status")]
+    public async Task<IActionResult> UpdateOrderStatus(int id, UpdateOrderStatusRequest updateOrderStatusRequest)
+    {
+        OrderResponse updatedOrder = await _orderService.UpdateOrderStatusAsync(id, updateOrderStatusRequest);
+
+        return Ok(updatedOrder);
+    }
+
     // The user id claim was put in the token by JwtLoginTokenCreator and read back by the JWT bearer middleware.
     private int GetCurrentUserId()
     {

@@ -124,6 +124,54 @@ public class OrderService
         return orderResponse;
     }
 
+    public async Task<List<OrderResponse>> GetAllOrdersAsync()
+    {
+        List<Order> ordersFromRepository = await _orderRepository.GetAllOrdersAsync();
+
+        List<OrderResponse> orderResponses = new List<OrderResponse>();
+        foreach (Order order in ordersFromRepository)
+        {
+            OrderResponse orderResponse = MapOrderToResponse(order);
+            orderResponses.Add(orderResponse);
+        }
+
+        return orderResponses;
+    }
+
+    // An order moves from Placed to Completed or Cancelled once, and never changes again.
+    public async Task<OrderResponse> UpdateOrderStatusAsync(int orderId, UpdateOrderStatusRequest updateOrderStatusRequest)
+    {
+        if (updateOrderStatusRequest.Status == null)
+        {
+            throw new ValidationException("A status is required.");
+        }
+
+        OrderStatus newStatus = updateOrderStatusRequest.Status.Value;
+        bool isAllowedStatus = newStatus == OrderStatus.Completed || newStatus == OrderStatus.Cancelled;
+        if (isAllowedStatus == false)
+        {
+            throw new ValidationException("Status must be Completed or Cancelled.");
+        }
+
+        Order? orderFromRepository = await _orderRepository.GetOrderByIdAsync(orderId);
+        if (orderFromRepository == null)
+        {
+            throw new NotFoundException($"Order {orderId} was not found.");
+        }
+
+        if (orderFromRepository.Status != OrderStatus.Placed)
+        {
+            throw new ConflictException($"Order {orderId} is already {orderFromRepository.Status}.");
+        }
+
+        orderFromRepository.Status = newStatus;
+        await _orderRepository.SaveOrderAsync(orderFromRepository);
+
+        OrderResponse orderResponse = MapOrderToResponse(orderFromRepository);
+
+        return orderResponse;
+    }
+
     private static OrderResponse MapOrderToResponse(Order order)
     {
         List<OrderItemResponse> itemResponses = new List<OrderItemResponse>();
