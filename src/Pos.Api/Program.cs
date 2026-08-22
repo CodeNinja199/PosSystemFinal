@@ -88,6 +88,7 @@ builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<CategoryService>();
 builder.Services.AddScoped<ProductService>();
 builder.Services.AddScoped<OrderService>();
+builder.Services.AddScoped<ReportService>();
 
 // Infrastructure repositories: scoped, like the DbContext they hold.
 builder.Services.AddScoped<IProductRepository, ProductRepository>();
