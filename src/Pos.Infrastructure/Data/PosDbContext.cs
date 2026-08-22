@@ -35,6 +35,22 @@ public class PosDbContext : DbContext
         }
     }
 
+    public DbSet<Order> Orders
+    {
+        get
+        {
+            return Set<Order>();
+        }
+    }
+
+    public DbSet<OrderItem> OrderItems
+    {
+        get
+        {
+            return Set<OrderItem>();
+        }
+    }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<User>()
@@ -67,6 +83,32 @@ public class PosDbContext : DbContext
             .HasOne<Category>()
             .WithMany()
             .HasForeignKey(product => product.CategoryId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<Order>()
+            .Property(order => order.Total)
+            .HasPrecision(18, 2);
+
+        // An order belongs to a user; users are never deleted, so Restrict only documents the intent.
+        modelBuilder.Entity<Order>()
+            .HasOne<User>()
+            .WithMany()
+            .HasForeignKey(order => order.UserId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<OrderItem>()
+            .Property(orderItem => orderItem.ProductName)
+            .HasMaxLength(100);
+
+        modelBuilder.Entity<OrderItem>()
+            .Property(orderItem => orderItem.UnitPrice)
+            .HasPrecision(18, 2);
+
+        // An order item points at its product; the database refuses to delete a product that appears in an order.
+        modelBuilder.Entity<OrderItem>()
+            .HasOne<Product>()
+            .WithMany()
+            .HasForeignKey(orderItem => orderItem.ProductId)
             .OnDelete(DeleteBehavior.Restrict);
     }
 }
