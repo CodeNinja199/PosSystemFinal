@@ -12,4 +12,6 @@ public interface IUserRepository
     Task<bool> IsEmailRegisteredAsync(string email);
 
     Task<User> AddUserAsync(User user);
+
+    Task<List<User>> GetCustomersAsync();
 }

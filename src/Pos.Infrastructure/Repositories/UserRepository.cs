@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Pos.Application.Interfaces;
 using Pos.Domain.Entities;
+using Pos.Domain.Enums;
 using Pos.Infrastructure.Data;
 
 namespace Pos.Infrastructure.Repositories;
@@ -45,5 +46,15 @@ public class UserRepository : IUserRepository
         await _context.SaveChangesAsync();
 
         return user;
+    }
+
+    public async Task<List<User>> GetCustomersAsync()
+    {
+        List<User> customersFromDatabase = await _context.Users
+            .Where(user => user.Role == UserRole.Customer)
+            .OrderBy(user => user.FullName)
+            .ToListAsync();
+
+        return customersFromDatabase;
     }
 }
