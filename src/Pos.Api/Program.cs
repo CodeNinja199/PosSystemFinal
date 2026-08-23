@@ -1,5 +1,6 @@
 using System.Text;
 using System.Text.Json.Serialization;
+using Azure.Identity;
 
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
@@ -16,6 +17,18 @@ using Pos.Infrastructure.Security;
 using Pos.Infrastructure.SeedData;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
+
+// How Key Vault works here:
+// 1. When KeyVault:Url is configured (never locally; user-secrets holds the local values), the vault becomes one more configuration source,
+//    read after appsettings.json and user-secrets, so its values win.
+// 2. Secret names use -- for the colon (Jwt--Secret lands on Jwt:Secret), so nothing else in the app changes.
+// 3. DefaultAzureCredential signs in as the developer (Azure CLI) or as the deployed app (managed identity); no key is stored anywhere.
+// Learned from: https://learn.microsoft.com/en-us/aspnet/core/security/key-vault-configuration
+string? keyVaultUrl = builder.Configuration["KeyVault:Url"];
+if (keyVaultUrl != null)
+{
+    builder.Configuration.AddAzureKeyVault(new Uri(keyVaultUrl), new DefaultAzureCredential());
+}
 
 // Add services to the container.
 
