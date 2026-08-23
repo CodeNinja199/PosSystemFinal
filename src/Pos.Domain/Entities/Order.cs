@@ -6,6 +6,8 @@ public class Order
 {
     public int Id { get; set; }
 
+    public int StoreId { get; set; }
+
     public int UserId { get; set; }
 
     public DateTime PlacedAt { get; set; }
