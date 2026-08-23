@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+
 using Pos.Application.Interfaces;
 using Pos.Domain.Entities;
 using Pos.Domain.Enums;

@@ -1,6 +1,8 @@
 using System.Security.Claims;
+
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+
 using Pos.Application.Dtos;
 using Pos.Application.Services;
 using Pos.Domain.Enums;

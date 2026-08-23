@@ -1,7 +1,9 @@
 using System.Security.Claims;
 using System.Text;
+
 using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
+
 using Pos.Application.Interfaces;
 using Pos.Domain.Entities;
 

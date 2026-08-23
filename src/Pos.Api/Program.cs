@@ -1,9 +1,11 @@
 using System.Text;
 using System.Text.Json.Serialization;
+
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
+
 using Pos.Api;
 using Pos.Api.Middleware;
 using Pos.Application.Interfaces;

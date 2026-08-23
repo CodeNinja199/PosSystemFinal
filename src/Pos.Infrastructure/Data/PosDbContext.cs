@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+
 using Pos.Domain.Entities;
 
 namespace Pos.Infrastructure.Data;

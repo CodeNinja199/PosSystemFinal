@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+
 using Pos.Domain.Enums;
 
 namespace Pos.Application.Dtos;
