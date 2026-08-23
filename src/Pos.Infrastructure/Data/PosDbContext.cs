@@ -12,6 +12,14 @@ public class PosDbContext : DbContext
     {
     }
 
+    public DbSet<Store> Stores
+    {
+        get
+        {
+            return Set<Store>();
+        }
+    }
+
     public DbSet<Category> Categories
     {
         get
@@ -54,6 +62,35 @@ public class PosDbContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        modelBuilder.Entity<Store>()
+            .Property(store => store.Name)
+            .HasMaxLength(100);
+
+        // Every tenant-owned row points at its store; stores are never deleted, so Restrict only documents the intent.
+        modelBuilder.Entity<User>()
+            .HasOne<Store>()
+            .WithMany()
+            .HasForeignKey(user => user.StoreId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<Category>()
+            .HasOne<Store>()
+            .WithMany()
+            .HasForeignKey(category => category.StoreId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<Product>()
+            .HasOne<Store>()
+            .WithMany()
+            .HasForeignKey(product => product.StoreId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<Order>()
+            .HasOne<Store>()
+            .WithMany()
+            .HasForeignKey(order => order.StoreId)
+            .OnDelete(DeleteBehavior.Restrict);
+
         modelBuilder.Entity<User>()
             .Property(user => user.FullName)
             .HasMaxLength(100);
