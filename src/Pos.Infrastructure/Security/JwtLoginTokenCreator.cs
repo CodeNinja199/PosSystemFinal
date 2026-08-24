@@ -10,7 +10,7 @@ using Pos.Domain.Entities;
 namespace Pos.Infrastructure.Security;
 
 // How login tokens work here:
-// 1. After the password matches, AuthService asks this class for a token holding the user id, email, and role, signed with Jwt:Secret (HS256).
+// 1. After the password matches, AuthService asks this class for a token holding the user id, email, role, and store id, signed with Jwt:Secret (HS256).
 // 2. The web app keeps the token in an httpOnly cookie and sends it as "Authorization: Bearer ..." on every API call.
 // 3. Every API checks the signature, issuer, audience, and expiry with the same Jwt settings before any [Authorize] action runs.
 // JsonWebTokenHandler is the handler ASP.NET Core itself uses since version 8; the token is valid for 24 hours.
@@ -18,6 +18,9 @@ namespace Pos.Infrastructure.Security;
 // and https://learn.microsoft.com/en-us/dotnet/core/compatibility/aspnet-core/8.0/securitytoken-events
 public class JwtLoginTokenCreator : ILoginTokenCreator
 {
+    // The name of the store claim; there is no standard claim type for it, so the controllers read it by this name.
+    public const string StoreIdClaimName = "storeId";
+
     private readonly JwtSettings _jwtSettings;
 
     public JwtLoginTokenCreator(JwtSettings jwtSettings)
@@ -31,7 +34,8 @@ public class JwtLoginTokenCreator : ILoginTokenCreator
         {
             new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
             new Claim(ClaimTypes.Email, user.Email),
-            new Claim(ClaimTypes.Role, user.Role.ToString())
+            new Claim(ClaimTypes.Role, user.Role.ToString()),
+            new Claim(StoreIdClaimName, user.StoreId.ToString())
         };
 
         byte[] secretBytes = Encoding.UTF8.GetBytes(_jwtSettings.Secret);
