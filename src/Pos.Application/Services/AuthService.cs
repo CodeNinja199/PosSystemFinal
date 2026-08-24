@@ -12,12 +12,14 @@ public class AuthService
     private readonly IUserRepository _userRepository;
     private readonly IPasswordHasher _passwordHasher;
     private readonly ILoginTokenCreator _loginTokenCreator;
+    private readonly IStoreRepository _storeRepository;
 
-    public AuthService(IUserRepository userRepository, IPasswordHasher passwordHasher, ILoginTokenCreator loginTokenCreator)
+    public AuthService(IUserRepository userRepository, IPasswordHasher passwordHasher, ILoginTokenCreator loginTokenCreator, IStoreRepository storeRepository)
     {
         _userRepository = userRepository;
         _passwordHasher = passwordHasher;
         _loginTokenCreator = loginTokenCreator;
+        _storeRepository = storeRepository;
     }
 
     public async Task<UserResponse> RegisterAsync(RegisterRequest registerRequest)
@@ -28,10 +30,17 @@ public class AuthService
             throw new ConflictException("Email is already registered.");
         }
 
+        Store? storeFromRepository = await _storeRepository.GetStoreByIdAsync(registerRequest.StoreId);
+        if (storeFromRepository == null)
+        {
+            throw new NotFoundException($"Store {registerRequest.StoreId} was not found.");
+        }
+
         string hashedPassword = _passwordHasher.HashPassword(registerRequest.Password);
 
         User newUser = new User
         {
+            StoreId = storeFromRepository.Id,
             FullName = registerRequest.FullName,
             Email = registerRequest.Email,
             PasswordHash = hashedPassword,

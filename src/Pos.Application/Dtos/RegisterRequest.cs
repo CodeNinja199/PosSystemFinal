@@ -17,4 +17,7 @@ public class RegisterRequest
     [MinLength(8)]
     [MaxLength(100)]
     public string Password { get; set; } = string.Empty;
+
+    [Range(1, int.MaxValue)]
+    public int StoreId { get; set; }
 }
