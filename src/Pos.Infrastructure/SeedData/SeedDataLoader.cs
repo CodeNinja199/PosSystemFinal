@@ -1,7 +1,5 @@
 using System.Text.Json;
-
 using Microsoft.EntityFrameworkCore;
-
 using Pos.Application.Interfaces;
 using Pos.Domain.Entities;
 using Pos.Domain.Enums;
@@ -11,9 +9,9 @@ namespace Pos.Infrastructure.SeedData;
 
 // How the seed loader works here:
 // 1. Program.cs asks for this class once at startup and calls LoadAsync before the API starts listening.
-// 2. If the Categories table already has rows, nothing happens: the seed only fills an empty database.
-// 3. Otherwise it reads seed-data.json, deserializes it (JSON text -> C# objects), and saves categories first so they get ids, then products.
-// 4. If the Users table is empty it also creates the staff from the "users" array, hashing the passwords found in the Seed section of configuration.
+// 2. If the Stores table already has rows, nothing happens: the seed only fills an empty database.
+// 3. Otherwise it reads seed-data.json, deserializes it (JSON text -> C# objects), and for each store saves the store first so it gets an id,
+//    then its categories, then its products, then its admin and cashier with passwords from the Seed section of configuration, hashed.
 // Serialize means C# object -> JSON text; deserialize means JSON text -> C# object. PropertyNameCaseInsensitive is set because
 // the file uses camelCase names ("stockQuantity") while the C# classes use PascalCase ("StockQuantity"), and matching is case-sensitive by default.
 // Learned from: https://learn.microsoft.com/en-us/dotnet/standard/serialization/system-text-json/deserialization
@@ -33,18 +31,25 @@ public class SeedDataLoader
 
     public async Task LoadAsync()
     {
-        SeedDataFile seedDataFile = await ReadSeedFileAsync();
-
-        bool hasCategoriesAlready = await _context.Categories.AnyAsync();
-        if (hasCategoriesAlready == false)
+        bool hasStoresAlready = await _context.Stores.AnyAsync();
+        if (hasStoresAlready)
         {
-            await SaveCategoriesAndProductsAsync(seedDataFile);
+            return;
         }
 
-        bool hasUsersAlready = await _context.Users.AnyAsync();
-        if (hasUsersAlready == false)
+        SeedDataFile seedDataFile = await ReadSeedFileAsync();
+
+        foreach (SeedStore seedStore in seedDataFile.Stores)
         {
-            await SaveStaffAsync(seedDataFile);
+            Store store = new Store
+            {
+                Name = seedStore.Name
+            };
+            _context.Stores.Add(store);
+            await _context.SaveChangesAsync();
+
+            await SaveCategoriesAndProductsAsync(seedStore, store.Id);
+            await SaveStaffAsync(seedStore, store.Id);
         }
     }
 
@@ -66,13 +71,14 @@ public class SeedDataLoader
         return seedDataFile;
     }
 
-    private async Task SaveCategoriesAndProductsAsync(SeedDataFile seedDataFile)
+    private async Task SaveCategoriesAndProductsAsync(SeedStore seedStore, int storeId)
     {
         Dictionary<string, Category> categoriesByName = new Dictionary<string, Category>();
-        foreach (SeedCategory seedCategory in seedDataFile.Categories)
+        foreach (SeedCategory seedCategory in seedStore.Categories)
         {
             Category category = new Category
             {
+                StoreId = storeId,
                 Name = seedCategory.Name
             };
             _context.Categories.Add(category);
@@ -80,11 +86,12 @@ public class SeedDataLoader
         }
         await _context.SaveChangesAsync();
 
-        foreach (SeedProduct seedProduct in seedDataFile.Products)
+        foreach (SeedProduct seedProduct in seedStore.Products)
         {
             Category categoryForProduct = categoriesByName[seedProduct.CategoryName];
             Product product = new Product
             {
+                StoreId = storeId,
                 Name = seedProduct.Name,
                 Price = seedProduct.Price,
                 StockQuantity = seedProduct.StockQuantity,
@@ -97,9 +104,9 @@ public class SeedDataLoader
         await _context.SaveChangesAsync();
     }
 
-    private async Task SaveStaffAsync(SeedDataFile seedDataFile)
+    private async Task SaveStaffAsync(SeedStore seedStore, int storeId)
     {
-        foreach (SeedUser seedUser in seedDataFile.Users)
+        foreach (SeedUser seedUser in seedStore.Users)
         {
             UserRole role = Enum.Parse<UserRole>(seedUser.Role);
 
@@ -111,6 +118,7 @@ public class SeedDataLoader
 
             User user = new User
             {
+                StoreId = storeId,
                 FullName = seedUser.FullName,
                 Email = seedUser.Email,
                 PasswordHash = _passwordHasher.HashPassword(plainPassword),
