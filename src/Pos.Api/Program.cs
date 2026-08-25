@@ -143,6 +143,7 @@ using (IServiceScope seedScope = app.Services.CreateScope())
 
 // Configure the HTTP request pipeline. Error handling comes first so it wraps everything after it.
 app.UseMiddleware<ErrorHandlingMiddleware>();
+app.UseMiddleware<RequestLoggingMiddleware>();
 
 if (app.Environment.IsDevelopment())
 {
