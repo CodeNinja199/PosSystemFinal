@@ -13,5 +13,5 @@ public interface IUserRepository
 
     Task<User> AddUserAsync(User user);
 
-    Task<List<User>> GetCustomersAsync();
+    Task<List<User>> GetCustomersAsync(int storeId);
 }

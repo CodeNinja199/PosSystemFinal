@@ -17,13 +17,13 @@ public class ReportService
     }
 
     // "Today" is the current UTC day, because PlacedAt is stored in UTC.
-    public async Task<SalesSummaryResponse> GetTodaysSalesSummaryAsync()
+    public async Task<SalesSummaryResponse> GetTodaysSalesSummaryAsync(int storeId)
     {
         DateTime dayStartUtc = DateTime.UtcNow.Date;
         DateTime dayEndUtc = dayStartUtc.AddDays(1);
 
-        decimal totalSales = await _orderRepository.GetSalesTotalBetweenAsync(dayStartUtc, dayEndUtc);
-        int orderCount = await _orderRepository.GetOrderCountBetweenAsync(dayStartUtc, dayEndUtc);
+        decimal totalSales = await _orderRepository.GetSalesTotalBetweenAsync(storeId, dayStartUtc, dayEndUtc);
+        int orderCount = await _orderRepository.GetOrderCountBetweenAsync(storeId, dayStartUtc, dayEndUtc);
 
         SalesSummaryResponse salesSummary = new SalesSummaryResponse
         {
@@ -36,9 +36,9 @@ public class ReportService
     }
 
     // Maps by hand, and the password hash is never copied.
-    public async Task<List<UserResponse>> GetCustomersAsync()
+    public async Task<List<UserResponse>> GetCustomersAsync(int storeId)
     {
-        List<User> customersFromRepository = await _userRepository.GetCustomersAsync();
+        List<User> customersFromRepository = await _userRepository.GetCustomersAsync(storeId);
 
         List<UserResponse> customerResponses = new List<UserResponse>();
         foreach (User customer in customersFromRepository)

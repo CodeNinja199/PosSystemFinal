@@ -16,11 +16,12 @@ public class ProductRepository : IProductRepository
         _context = context;
     }
 
-    public async Task<List<Product>> GetProductsAsync(int? categoryId)
+    public async Task<List<Product>> GetProductsAsync(int storeId, int? categoryId)
     {
         if (categoryId == null)
         {
             List<Product> allProducts = await _context.Products
+                .Where(product => product.StoreId == storeId)
                 .OrderBy(product => product.Name)
                 .ToListAsync();
 
@@ -28,6 +29,7 @@ public class ProductRepository : IProductRepository
         }
 
         List<Product> productsInCategory = await _context.Products
+            .Where(product => product.StoreId == storeId)
             .Where(product => product.CategoryId == categoryId.Value)
             .OrderBy(product => product.Name)
             .ToListAsync();
@@ -35,18 +37,18 @@ public class ProductRepository : IProductRepository
         return productsInCategory;
     }
 
-    public async Task<Product?> GetProductByIdAsync(int productId)
+    public async Task<Product?> GetProductByIdAsync(int productId, int storeId)
     {
         Product? productFromDatabase = await _context.Products
-            .FirstOrDefaultAsync(product => product.Id == productId);
+            .FirstOrDefaultAsync(product => product.Id == productId && product.StoreId == storeId);
 
         return productFromDatabase;
     }
 
-    public async Task<List<Product>> GetProductsByIdsAsync(List<int> productIds)
+    public async Task<List<Product>> GetProductsByIdsAsync(List<int> productIds, int storeId)
     {
         List<Product> productsFromDatabase = await _context.Products
-            .Where(product => productIds.Contains(product.Id))
+            .Where(product => productIds.Contains(product.Id) && product.StoreId == storeId)
             .ToListAsync();
 
         return productsFromDatabase;

@@ -17,9 +17,9 @@ public class ProductService
         _categoryRepository = categoryRepository;
     }
 
-    public async Task<List<ProductResponse>> GetProductsAsync(int? categoryId)
+    public async Task<List<ProductResponse>> GetProductsAsync(int storeId, int? categoryId)
     {
-        List<Product> productsFromRepository = await _productRepository.GetProductsAsync(categoryId);
+        List<Product> productsFromRepository = await _productRepository.GetProductsAsync(storeId, categoryId);
 
         List<ProductResponse> productResponses = new List<ProductResponse>();
         foreach (Product product in productsFromRepository)
@@ -31,21 +31,22 @@ public class ProductService
         return productResponses;
     }
 
-    public async Task<ProductResponse> GetProductByIdAsync(int productId)
+    public async Task<ProductResponse> GetProductByIdAsync(int productId, int storeId)
     {
-        Product productFromRepository = await FindProductOrThrowAsync(productId);
+        Product productFromRepository = await FindProductOrThrowAsync(productId, storeId);
 
         ProductResponse productResponse = MapProductToResponse(productFromRepository);
 
         return productResponse;
     }
 
-    public async Task<ProductResponse> CreateProductAsync(CreateProductRequest createProductRequest)
+    public async Task<ProductResponse> CreateProductAsync(CreateProductRequest createProductRequest, int storeId)
     {
-        await EnsureCategoryExistsAsync(createProductRequest.CategoryId);
+        await EnsureCategoryExistsAsync(createProductRequest.CategoryId, storeId);
 
         Product newProduct = new Product
         {
+            StoreId = storeId,
             Name = createProductRequest.Name,
             Price = createProductRequest.Price,
             StockQuantity = createProductRequest.StockQuantity,
@@ -60,11 +61,11 @@ public class ProductService
         return productResponse;
     }
 
-    public async Task<ProductResponse> UpdateProductAsync(int productId, UpdateProductRequest updateProductRequest)
+    public async Task<ProductResponse> UpdateProductAsync(int productId, UpdateProductRequest updateProductRequest, int storeId)
     {
-        Product productFromRepository = await FindProductOrThrowAsync(productId);
+        Product productFromRepository = await FindProductOrThrowAsync(productId, storeId);
 
-        await EnsureCategoryExistsAsync(updateProductRequest.CategoryId);
+        await EnsureCategoryExistsAsync(updateProductRequest.CategoryId, storeId);
 
         productFromRepository.Name = updateProductRequest.Name;
         productFromRepository.Price = updateProductRequest.Price;
@@ -79,14 +80,14 @@ public class ProductService
         return productResponse;
     }
 
-    public async Task<ProductResponse> AdjustStockAsync(int productId, AdjustStockRequest adjustStockRequest)
+    public async Task<ProductResponse> AdjustStockAsync(int productId, AdjustStockRequest adjustStockRequest, int storeId)
     {
         if (adjustStockRequest.Change == 0)
         {
             throw new ValidationException("Change must not be zero.");
         }
 
-        Product productFromRepository = await FindProductOrThrowAsync(productId);
+        Product productFromRepository = await FindProductOrThrowAsync(productId, storeId);
 
         int newStockQuantity = productFromRepository.StockQuantity + adjustStockRequest.Change;
         if (newStockQuantity < 0)
@@ -102,9 +103,9 @@ public class ProductService
         return productResponse;
     }
 
-    public async Task DeleteProductAsync(int productId)
+    public async Task DeleteProductAsync(int productId, int storeId)
     {
-        Product productFromRepository = await FindProductOrThrowAsync(productId);
+        Product productFromRepository = await FindProductOrThrowAsync(productId, storeId);
 
         bool isProductInAnyOrder = await _productRepository.IsProductInAnyOrderAsync(productId);
         if (isProductInAnyOrder)
@@ -115,9 +116,9 @@ public class ProductService
         await _productRepository.DeleteProductAsync(productFromRepository);
     }
 
-    private async Task<Product> FindProductOrThrowAsync(int productId)
+    private async Task<Product> FindProductOrThrowAsync(int productId, int storeId)
     {
-        Product? productFromRepository = await _productRepository.GetProductByIdAsync(productId);
+        Product? productFromRepository = await _productRepository.GetProductByIdAsync(productId, storeId);
         if (productFromRepository == null)
         {
             throw new NotFoundException($"Product {productId} was not found.");
@@ -126,9 +127,9 @@ public class ProductService
         return productFromRepository;
     }
 
-    private async Task EnsureCategoryExistsAsync(int categoryId)
+    private async Task EnsureCategoryExistsAsync(int categoryId, int storeId)
     {
-        Category? categoryFromRepository = await _categoryRepository.GetCategoryByIdAsync(categoryId);
+        Category? categoryFromRepository = await _categoryRepository.GetCategoryByIdAsync(categoryId, storeId);
         if (categoryFromRepository == null)
         {
             throw new NotFoundException($"Category {categoryId} was not found.");

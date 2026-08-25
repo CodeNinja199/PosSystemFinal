@@ -15,9 +15,9 @@ public class CategoryService
         _categoryRepository = categoryRepository;
     }
 
-    public async Task<List<CategoryResponse>> GetCategoriesAsync()
+    public async Task<List<CategoryResponse>> GetCategoriesAsync(int storeId)
     {
-        List<Category> categoriesFromRepository = await _categoryRepository.GetAllCategoriesAsync();
+        List<Category> categoriesFromRepository = await _categoryRepository.GetAllCategoriesAsync(storeId);
 
         List<CategoryResponse> categoryResponses = new List<CategoryResponse>();
         foreach (Category category in categoriesFromRepository)
@@ -29,9 +29,9 @@ public class CategoryService
         return categoryResponses;
     }
 
-    public async Task<CategoryResponse> GetCategoryByIdAsync(int categoryId)
+    public async Task<CategoryResponse> GetCategoryByIdAsync(int categoryId, int storeId)
     {
-        Category? categoryFromRepository = await _categoryRepository.GetCategoryByIdAsync(categoryId);
+        Category? categoryFromRepository = await _categoryRepository.GetCategoryByIdAsync(categoryId, storeId);
         if (categoryFromRepository == null)
         {
             throw new NotFoundException($"Category {categoryId} was not found.");
@@ -42,9 +42,9 @@ public class CategoryService
         return categoryResponse;
     }
 
-    public async Task<CategoryResponse> CreateCategoryAsync(CreateCategoryRequest createCategoryRequest)
+    public async Task<CategoryResponse> CreateCategoryAsync(CreateCategoryRequest createCategoryRequest, int storeId)
     {
-        bool isNameTaken = await _categoryRepository.IsCategoryNameTakenAsync(createCategoryRequest.Name, null);
+        bool isNameTaken = await _categoryRepository.IsCategoryNameTakenAsync(createCategoryRequest.Name, storeId, null);
         if (isNameTaken)
         {
             throw new ConflictException($"A category named {createCategoryRequest.Name} already exists.");
@@ -52,6 +52,7 @@ public class CategoryService
 
         Category newCategory = new Category
         {
+            StoreId = storeId,
             Name = createCategoryRequest.Name
         };
         Category savedCategory = await _categoryRepository.AddCategoryAsync(newCategory);
@@ -61,15 +62,15 @@ public class CategoryService
         return categoryResponse;
     }
 
-    public async Task<CategoryResponse> UpdateCategoryAsync(int categoryId, UpdateCategoryRequest updateCategoryRequest)
+    public async Task<CategoryResponse> UpdateCategoryAsync(int categoryId, UpdateCategoryRequest updateCategoryRequest, int storeId)
     {
-        Category? categoryFromRepository = await _categoryRepository.GetCategoryByIdAsync(categoryId);
+        Category? categoryFromRepository = await _categoryRepository.GetCategoryByIdAsync(categoryId, storeId);
         if (categoryFromRepository == null)
         {
             throw new NotFoundException($"Category {categoryId} was not found.");
         }
 
-        bool isNameTaken = await _categoryRepository.IsCategoryNameTakenAsync(updateCategoryRequest.Name, categoryId);
+        bool isNameTaken = await _categoryRepository.IsCategoryNameTakenAsync(updateCategoryRequest.Name, storeId, categoryId);
         if (isNameTaken)
         {
             throw new ConflictException($"A category named {updateCategoryRequest.Name} already exists.");
@@ -83,9 +84,9 @@ public class CategoryService
         return categoryResponse;
     }
 
-    public async Task DeleteCategoryAsync(int categoryId)
+    public async Task DeleteCategoryAsync(int categoryId, int storeId)
     {
-        Category? categoryFromRepository = await _categoryRepository.GetCategoryByIdAsync(categoryId);
+        Category? categoryFromRepository = await _categoryRepository.GetCategoryByIdAsync(categoryId, storeId);
         if (categoryFromRepository == null)
         {
             throw new NotFoundException($"Category {categoryId} was not found.");

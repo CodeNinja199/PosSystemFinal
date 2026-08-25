@@ -21,7 +21,9 @@ public class ProductsController : ControllerBase
     [HttpGet]
     public async Task<IActionResult> GetProducts(int? categoryId)
     {
-        List<ProductResponse> products = await _productService.GetProductsAsync(categoryId);
+        int storeId = CurrentUserClaims.GetStoreId(User);
+
+        List<ProductResponse> products = await _productService.GetProductsAsync(storeId, categoryId);
 
         return Ok(products);
     }
@@ -30,7 +32,9 @@ public class ProductsController : ControllerBase
     [HttpGet("{id}")]
     public async Task<IActionResult> GetProductById(int id)
     {
-        ProductResponse product = await _productService.GetProductByIdAsync(id);
+        int storeId = CurrentUserClaims.GetStoreId(User);
+
+        ProductResponse product = await _productService.GetProductByIdAsync(id, storeId);
 
         return Ok(product);
     }
@@ -39,7 +43,9 @@ public class ProductsController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> CreateProduct(CreateProductRequest createProductRequest)
     {
-        ProductResponse createdProduct = await _productService.CreateProductAsync(createProductRequest);
+        int storeId = CurrentUserClaims.GetStoreId(User);
+
+        ProductResponse createdProduct = await _productService.CreateProductAsync(createProductRequest, storeId);
 
         return CreatedAtAction(nameof(GetProductById), new { id = createdProduct.Id }, createdProduct);
     }
@@ -48,7 +54,9 @@ public class ProductsController : ControllerBase
     [HttpPut("{id}")]
     public async Task<IActionResult> UpdateProduct(int id, UpdateProductRequest updateProductRequest)
     {
-        ProductResponse updatedProduct = await _productService.UpdateProductAsync(id, updateProductRequest);
+        int storeId = CurrentUserClaims.GetStoreId(User);
+
+        ProductResponse updatedProduct = await _productService.UpdateProductAsync(id, updateProductRequest, storeId);
 
         return Ok(updatedProduct);
     }
@@ -57,7 +65,9 @@ public class ProductsController : ControllerBase
     [HttpPatch("{id}/stock")]
     public async Task<IActionResult> AdjustStock(int id, AdjustStockRequest adjustStockRequest)
     {
-        ProductResponse updatedProduct = await _productService.AdjustStockAsync(id, adjustStockRequest);
+        int storeId = CurrentUserClaims.GetStoreId(User);
+
+        ProductResponse updatedProduct = await _productService.AdjustStockAsync(id, adjustStockRequest, storeId);
 
         return Ok(updatedProduct);
     }
@@ -66,7 +76,9 @@ public class ProductsController : ControllerBase
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteProduct(int id)
     {
-        await _productService.DeleteProductAsync(id);
+        int storeId = CurrentUserClaims.GetStoreId(User);
+
+        await _productService.DeleteProductAsync(id, storeId);
 
         return NoContent();
     }

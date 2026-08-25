@@ -19,7 +19,7 @@ public class OrderService
     }
 
     // Order of work: check every line -> build the order and reduce stock -> one save. Nothing is written before every check passes.
-    public async Task<OrderResponse> PlaceOrderAsync(PlaceOrderRequest placeOrderRequest, int currentUserId)
+    public async Task<OrderResponse> PlaceOrderAsync(PlaceOrderRequest placeOrderRequest, int currentUserId, int storeId)
     {
         HashSet<int> productIdsSeen = new HashSet<int>();
         foreach (OrderItemRequest orderItemRequest in placeOrderRequest.Items)
@@ -32,7 +32,7 @@ public class OrderService
         }
 
         List<int> requestedProductIds = new List<int>(productIdsSeen);
-        List<Product> productsFromRepository = await _productRepository.GetProductsByIdsAsync(requestedProductIds);
+        List<Product> productsFromRepository = await _productRepository.GetProductsByIdsAsync(requestedProductIds, storeId);
 
         Dictionary<int, Product> productsById = new Dictionary<int, Product>();
         foreach (Product product in productsFromRepository)
@@ -47,6 +47,7 @@ public class OrderService
 
         Order newOrder = new Order
         {
+            StoreId = storeId,
             UserId = currentUserId,
             PlacedAt = DateTime.UtcNow,
             Status = OrderStatus.Placed,
@@ -104,9 +105,9 @@ public class OrderService
     }
 
     // A customer may only open their own orders; a cashier or admin may open any order of the store.
-    public async Task<OrderResponse> GetOrderByIdAsync(int orderId, int currentUserId, UserRole currentUserRole)
+    public async Task<OrderResponse> GetOrderByIdAsync(int orderId, int currentUserId, UserRole currentUserRole, int storeId)
     {
-        Order? orderFromRepository = await _orderRepository.GetOrderByIdAsync(orderId);
+        Order? orderFromRepository = await _orderRepository.GetOrderByIdAsync(orderId, storeId);
         if (orderFromRepository == null)
         {
             throw new NotFoundException($"Order {orderId} was not found.");
@@ -124,9 +125,9 @@ public class OrderService
         return orderResponse;
     }
 
-    public async Task<List<OrderResponse>> GetAllOrdersAsync()
+    public async Task<List<OrderResponse>> GetAllOrdersAsync(int storeId)
     {
-        List<Order> ordersFromRepository = await _orderRepository.GetAllOrdersAsync();
+        List<Order> ordersFromRepository = await _orderRepository.GetAllOrdersAsync(storeId);
 
         List<OrderResponse> orderResponses = new List<OrderResponse>();
         foreach (Order order in ordersFromRepository)
@@ -139,7 +140,7 @@ public class OrderService
     }
 
     // An order moves from Placed to Completed or Cancelled once, and never changes again.
-    public async Task<OrderResponse> UpdateOrderStatusAsync(int orderId, UpdateOrderStatusRequest updateOrderStatusRequest)
+    public async Task<OrderResponse> UpdateOrderStatusAsync(int orderId, UpdateOrderStatusRequest updateOrderStatusRequest, int storeId)
     {
         if (updateOrderStatusRequest.Status == null)
         {
@@ -153,7 +154,7 @@ public class OrderService
             throw new ValidationException("Status must be Completed or Cancelled.");
         }
 
-        Order? orderFromRepository = await _orderRepository.GetOrderByIdAsync(orderId);
+        Order? orderFromRepository = await _orderRepository.GetOrderByIdAsync(orderId, storeId);
         if (orderFromRepository == null)
         {
             throw new NotFoundException($"Order {orderId} was not found.");

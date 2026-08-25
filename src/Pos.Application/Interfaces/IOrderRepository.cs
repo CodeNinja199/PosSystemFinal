@@ -10,13 +10,13 @@ public interface IOrderRepository
 
     Task<List<Order>> GetOrdersForUserAsync(int userId);
 
-    Task<Order?> GetOrderByIdAsync(int orderId);
+    Task<Order?> GetOrderByIdAsync(int orderId, int storeId);
 
-    Task<List<Order>> GetAllOrdersAsync();
+    Task<List<Order>> GetAllOrdersAsync(int storeId);
 
     Task SaveOrderAsync(Order order);
 
-    Task<decimal> GetSalesTotalBetweenAsync(DateTime fromUtc, DateTime toUtc);
+    Task<decimal> GetSalesTotalBetweenAsync(int storeId, DateTime fromUtc, DateTime toUtc);
 
-    Task<int> GetOrderCountBetweenAsync(DateTime fromUtc, DateTime toUtc);
+    Task<int> GetOrderCountBetweenAsync(int storeId, DateTime fromUtc, DateTime toUtc);
 }

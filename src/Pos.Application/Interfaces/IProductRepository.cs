@@ -5,11 +5,11 @@ namespace Pos.Application.Interfaces;
 // Implemented by InMemoryProductRepository in Infrastructure, later by the EF Core ProductRepository.
 public interface IProductRepository
 {
-    Task<List<Product>> GetProductsAsync(int? categoryId);
+    Task<List<Product>> GetProductsAsync(int storeId, int? categoryId);
 
-    Task<Product?> GetProductByIdAsync(int productId);
+    Task<Product?> GetProductByIdAsync(int productId, int storeId);
 
-    Task<List<Product>> GetProductsByIdsAsync(List<int> productIds);
+    Task<List<Product>> GetProductsByIdsAsync(List<int> productIds, int storeId);
 
     Task<bool> IsProductInAnyOrderAsync(int productId);
 

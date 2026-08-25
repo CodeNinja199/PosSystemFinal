@@ -21,7 +21,9 @@ public class CategoriesController : ControllerBase
     [HttpGet]
     public async Task<IActionResult> GetCategories()
     {
-        List<CategoryResponse> categories = await _categoryService.GetCategoriesAsync();
+        int storeId = CurrentUserClaims.GetStoreId(User);
+
+        List<CategoryResponse> categories = await _categoryService.GetCategoriesAsync(storeId);
 
         return Ok(categories);
     }
@@ -30,7 +32,9 @@ public class CategoriesController : ControllerBase
     [HttpGet("{id}")]
     public async Task<IActionResult> GetCategoryById(int id)
     {
-        CategoryResponse category = await _categoryService.GetCategoryByIdAsync(id);
+        int storeId = CurrentUserClaims.GetStoreId(User);
+
+        CategoryResponse category = await _categoryService.GetCategoryByIdAsync(id, storeId);
 
         return Ok(category);
     }
@@ -39,7 +43,9 @@ public class CategoriesController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> CreateCategory(CreateCategoryRequest createCategoryRequest)
     {
-        CategoryResponse createdCategory = await _categoryService.CreateCategoryAsync(createCategoryRequest);
+        int storeId = CurrentUserClaims.GetStoreId(User);
+
+        CategoryResponse createdCategory = await _categoryService.CreateCategoryAsync(createCategoryRequest, storeId);
 
         return CreatedAtAction(nameof(GetCategoryById), new { id = createdCategory.Id }, createdCategory);
     }
@@ -48,7 +54,9 @@ public class CategoriesController : ControllerBase
     [HttpPut("{id}")]
     public async Task<IActionResult> UpdateCategory(int id, UpdateCategoryRequest updateCategoryRequest)
     {
-        CategoryResponse updatedCategory = await _categoryService.UpdateCategoryAsync(id, updateCategoryRequest);
+        int storeId = CurrentUserClaims.GetStoreId(User);
+
+        CategoryResponse updatedCategory = await _categoryService.UpdateCategoryAsync(id, updateCategoryRequest, storeId);
 
         return Ok(updatedCategory);
     }
@@ -57,7 +65,9 @@ public class CategoriesController : ControllerBase
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteCategory(int id)
     {
-        await _categoryService.DeleteCategoryAsync(id);
+        int storeId = CurrentUserClaims.GetStoreId(User);
+
+        await _categoryService.DeleteCategoryAsync(id, storeId);
 
         return NoContent();
     }

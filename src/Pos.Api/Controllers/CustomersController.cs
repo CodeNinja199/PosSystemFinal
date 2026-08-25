@@ -21,7 +21,9 @@ public class CustomersController : ControllerBase
     [HttpGet]
     public async Task<IActionResult> GetCustomers()
     {
-        List<UserResponse> customers = await _reportService.GetCustomersAsync();
+        int storeId = CurrentUserClaims.GetStoreId(User);
+
+        List<UserResponse> customers = await _reportService.GetCustomersAsync(storeId);
 
         return Ok(customers);
     }

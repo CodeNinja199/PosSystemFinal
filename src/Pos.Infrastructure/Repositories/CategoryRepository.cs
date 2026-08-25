@@ -16,36 +16,37 @@ public class CategoryRepository : ICategoryRepository
         _context = context;
     }
 
-    public async Task<List<Category>> GetAllCategoriesAsync()
+    public async Task<List<Category>> GetAllCategoriesAsync(int storeId)
     {
         List<Category> allCategories = await _context.Categories
+            .Where(category => category.StoreId == storeId)
             .OrderBy(category => category.Name)
             .ToListAsync();
 
         return allCategories;
     }
 
-    public async Task<Category?> GetCategoryByIdAsync(int categoryId)
+    public async Task<Category?> GetCategoryByIdAsync(int categoryId, int storeId)
     {
         Category? categoryFromDatabase = await _context.Categories
-            .FirstOrDefaultAsync(category => category.Id == categoryId);
+            .FirstOrDefaultAsync(category => category.Id == categoryId && category.StoreId == storeId);
 
         return categoryFromDatabase;
     }
 
     // SQL Server compares strings without case by default, so "drinks" matches "Drinks" here as it did in the list.
-    public async Task<bool> IsCategoryNameTakenAsync(string categoryName, int? categoryIdToIgnore)
+    public async Task<bool> IsCategoryNameTakenAsync(string categoryName, int storeId, int? categoryIdToIgnore)
     {
         if (categoryIdToIgnore == null)
         {
             bool isNameTaken = await _context.Categories
-                .AnyAsync(category => category.Name == categoryName);
+                .AnyAsync(category => category.StoreId == storeId && category.Name == categoryName);
 
             return isNameTaken;
         }
 
         bool isNameTakenByAnotherCategory = await _context.Categories
-            .AnyAsync(category => category.Name == categoryName && category.Id != categoryIdToIgnore.Value);
+            .AnyAsync(category => category.StoreId == storeId && category.Name == categoryName && category.Id != categoryIdToIgnore.Value);
 
         return isNameTakenByAnotherCategory;
     }

@@ -35,19 +35,20 @@ public class OrderRepository : IOrderRepository
         return ordersFromDatabase;
     }
 
-    public async Task<Order?> GetOrderByIdAsync(int orderId)
+    public async Task<Order?> GetOrderByIdAsync(int orderId, int storeId)
     {
         Order? orderFromDatabase = await _context.Orders
             .Include(order => order.Items)
-            .FirstOrDefaultAsync(order => order.Id == orderId);
+            .FirstOrDefaultAsync(order => order.Id == orderId && order.StoreId == storeId);
 
         return orderFromDatabase;
     }
 
-    public async Task<List<Order>> GetAllOrdersAsync()
+    public async Task<List<Order>> GetAllOrdersAsync(int storeId)
     {
         List<Order> ordersFromDatabase = await _context.Orders
             .Include(order => order.Items)
+            .Where(order => order.StoreId == storeId)
             .OrderByDescending(order => order.PlacedAt)
             .ToListAsync();
 
@@ -59,19 +60,19 @@ public class OrderRepository : IOrderRepository
         await _context.SaveChangesAsync();
     }
 
-    public async Task<decimal> GetSalesTotalBetweenAsync(DateTime fromUtc, DateTime toUtc)
+    public async Task<decimal> GetSalesTotalBetweenAsync(int storeId, DateTime fromUtc, DateTime toUtc)
     {
         decimal salesTotal = await _context.Orders
-            .Where(order => order.PlacedAt >= fromUtc && order.PlacedAt < toUtc && order.Status != OrderStatus.Cancelled)
+            .Where(order => order.StoreId == storeId && order.PlacedAt >= fromUtc && order.PlacedAt < toUtc && order.Status != OrderStatus.Cancelled)
             .SumAsync(order => order.Total);
 
         return salesTotal;
     }
 
-    public async Task<int> GetOrderCountBetweenAsync(DateTime fromUtc, DateTime toUtc)
+    public async Task<int> GetOrderCountBetweenAsync(int storeId, DateTime fromUtc, DateTime toUtc)
     {
         int orderCount = await _context.Orders
-            .Where(order => order.PlacedAt >= fromUtc && order.PlacedAt < toUtc && order.Status != OrderStatus.Cancelled)
+            .Where(order => order.StoreId == storeId && order.PlacedAt >= fromUtc && order.PlacedAt < toUtc && order.Status != OrderStatus.Cancelled)
             .CountAsync();
 
         return orderCount;

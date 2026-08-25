@@ -21,7 +21,9 @@ public class ReportsController : ControllerBase
     [HttpGet("sales-summary")]
     public async Task<IActionResult> GetTodaysSalesSummary()
     {
-        SalesSummaryResponse salesSummary = await _reportService.GetTodaysSalesSummaryAsync();
+        int storeId = CurrentUserClaims.GetStoreId(User);
+
+        SalesSummaryResponse salesSummary = await _reportService.GetTodaysSalesSummaryAsync(storeId);
 
         return Ok(salesSummary);
     }

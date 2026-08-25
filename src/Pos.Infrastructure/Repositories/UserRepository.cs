@@ -49,10 +49,10 @@ public class UserRepository : IUserRepository
         return user;
     }
 
-    public async Task<List<User>> GetCustomersAsync()
+    public async Task<List<User>> GetCustomersAsync(int storeId)
     {
         List<User> customersFromDatabase = await _context.Users
-            .Where(user => user.Role == UserRole.Customer)
+            .Where(user => user.Role == UserRole.Customer && user.StoreId == storeId)
             .OrderBy(user => user.FullName)
             .ToListAsync();
 

@@ -1,5 +1,3 @@
-using System.Security.Claims;
-
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -24,9 +22,10 @@ public class OrdersController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> PlaceOrder(PlaceOrderRequest placeOrderRequest)
     {
-        int currentUserId = GetCurrentUserId();
+        int currentUserId = CurrentUserClaims.GetUserId(User);
+        int storeId = CurrentUserClaims.GetStoreId(User);
 
-        OrderResponse placedOrder = await _orderService.PlaceOrderAsync(placeOrderRequest, currentUserId);
+        OrderResponse placedOrder = await _orderService.PlaceOrderAsync(placeOrderRequest, currentUserId, storeId);
 
         return StatusCode(StatusCodes.Status201Created, placedOrder);
     }
@@ -35,7 +34,7 @@ public class OrdersController : ControllerBase
     [HttpGet("mine")]
     public async Task<IActionResult> GetMyOrders()
     {
-        int currentUserId = GetCurrentUserId();
+        int currentUserId = CurrentUserClaims.GetUserId(User);
 
         List<OrderResponse> myOrders = await _orderService.GetOrdersForUserAsync(currentUserId);
 
@@ -46,10 +45,11 @@ public class OrdersController : ControllerBase
     [HttpGet("{id}")]
     public async Task<IActionResult> GetOrderById(int id)
     {
-        int currentUserId = GetCurrentUserId();
-        UserRole currentUserRole = GetCurrentUserRole();
+        int currentUserId = CurrentUserClaims.GetUserId(User);
+        UserRole currentUserRole = CurrentUserClaims.GetRole(User);
+        int storeId = CurrentUserClaims.GetStoreId(User);
 
-        OrderResponse order = await _orderService.GetOrderByIdAsync(id, currentUserId, currentUserRole);
+        OrderResponse order = await _orderService.GetOrderByIdAsync(id, currentUserId, currentUserRole, storeId);
 
         return Ok(order);
     }
@@ -58,7 +58,9 @@ public class OrdersController : ControllerBase
     [HttpGet]
     public async Task<IActionResult> GetAllOrders()
     {
-        List<OrderResponse> orders = await _orderService.GetAllOrdersAsync();
+        int storeId = CurrentUserClaims.GetStoreId(User);
+
+        List<OrderResponse> orders = await _orderService.GetAllOrdersAsync(storeId);
 
         return Ok(orders);
     }
@@ -67,36 +69,10 @@ public class OrdersController : ControllerBase
     [HttpPatch("{id}/status")]
     public async Task<IActionResult> UpdateOrderStatus(int id, UpdateOrderStatusRequest updateOrderStatusRequest)
     {
-        OrderResponse updatedOrder = await _orderService.UpdateOrderStatusAsync(id, updateOrderStatusRequest);
+        int storeId = CurrentUserClaims.GetStoreId(User);
+
+        OrderResponse updatedOrder = await _orderService.UpdateOrderStatusAsync(id, updateOrderStatusRequest, storeId);
 
         return Ok(updatedOrder);
-    }
-
-    // The user id claim was put in the token by JwtLoginTokenCreator and read back by the JWT bearer middleware.
-    private int GetCurrentUserId()
-    {
-        Claim? userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
-        if (userIdClaim == null)
-        {
-            throw new InvalidOperationException("The token has no user id claim.");
-        }
-
-        int currentUserId = int.Parse(userIdClaim.Value);
-
-        return currentUserId;
-    }
-
-    // The role claim was put in the token by JwtLoginTokenCreator; it is the same value [Authorize(Roles = ...)] reads.
-    private UserRole GetCurrentUserRole()
-    {
-        Claim? roleClaim = User.FindFirst(ClaimTypes.Role);
-        if (roleClaim == null)
-        {
-            throw new InvalidOperationException("The token has no role claim.");
-        }
-
-        UserRole currentUserRole = Enum.Parse<UserRole>(roleClaim.Value);
-
-        return currentUserRole;
     }
 }
