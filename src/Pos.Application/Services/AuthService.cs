@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging;
 using Pos.Application.Dtos;
 using Pos.Application.Exceptions;
 using Pos.Application.Interfaces;
@@ -13,9 +14,11 @@ public class AuthService
     private readonly IPasswordHasher _passwordHasher;
     private readonly ILoginTokenCreator _loginTokenCreator;
     private readonly IStoreRepository _storeRepository;
+    private readonly ILogger<AuthService> _logger;
 
-    public AuthService(IUserRepository userRepository, IPasswordHasher passwordHasher, ILoginTokenCreator loginTokenCreator, IStoreRepository storeRepository)
+    public AuthService(IUserRepository userRepository, IPasswordHasher passwordHasher, ILoginTokenCreator loginTokenCreator, IStoreRepository storeRepository, ILogger<AuthService> logger)
     {
+        _logger = logger;
         _userRepository = userRepository;
         _passwordHasher = passwordHasher;
         _loginTokenCreator = loginTokenCreator;
@@ -60,12 +63,14 @@ public class AuthService
         User? userFromRepository = await _userRepository.GetUserByEmailAsync(loginRequest.Email);
         if (userFromRepository == null)
         {
+            _logger.LogWarning("Login failed for {Email}: no such account", loginRequest.Email);
             throw new UnauthorizedException("Email or password is incorrect.");
         }
 
         bool isPasswordCorrect = _passwordHasher.IsPasswordCorrect(loginRequest.Password, userFromRepository.PasswordHash);
         if (isPasswordCorrect == false)
         {
+            _logger.LogWarning("Login failed for {Email}: wrong password", loginRequest.Email);
             throw new UnauthorizedException("Email or password is incorrect.");
         }
 

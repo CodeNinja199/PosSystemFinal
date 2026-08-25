@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging;
 using Pos.Application.Dtos;
 using Pos.Application.Exceptions;
 using Pos.Application.Interfaces;
@@ -11,9 +12,11 @@ public class OrderService
 {
     private readonly IOrderRepository _orderRepository;
     private readonly IProductRepository _productRepository;
+    private readonly ILogger<OrderService> _logger;
 
-    public OrderService(IOrderRepository orderRepository, IProductRepository productRepository)
+    public OrderService(IOrderRepository orderRepository, IProductRepository productRepository, ILogger<OrderService> logger)
     {
+        _logger = logger;
         _orderRepository = orderRepository;
         _productRepository = productRepository;
     }
@@ -81,9 +84,17 @@ public class OrderService
             newOrder.Total = newOrder.Total + productForItem.Price * orderItemRequest.Quantity;
 
             productForItem.StockQuantity = productForItem.StockQuantity - orderItemRequest.Quantity;
+
+            bool isBelowLowStockThreshold = productForItem.StockQuantity <= productForItem.LowStockThreshold;
+            if (isBelowLowStockThreshold)
+            {
+                _logger.LogWarning("Product {ProductName} in store {StoreId} is low on stock: {StockQuantity} left", productForItem.Name, storeId, productForItem.StockQuantity);
+            }
         }
 
         await _orderRepository.SaveNewOrderAsync(newOrder);
+
+        _logger.LogInformation("Order {OrderId} placed by user {UserId} in store {StoreId} for {Total}", newOrder.Id, currentUserId, storeId, newOrder.Total);
 
         OrderResponse orderResponse = MapOrderToResponse(newOrder);
 
