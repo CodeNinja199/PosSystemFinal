@@ -46,6 +46,9 @@ builder.Services.AddControllers()
 
 // Swagger setup follows the Swashbuckle.AspNetCore README: "Getting Started" plus the bearer security definition
 // that adds the Authorize button, so every endpoint can be tried with a token.
+// One in-memory cache for the whole app; CategoryService keeps each store's category list in it for five minutes.
+builder.Services.AddMemoryCache();
+
 builder.Services.AddSwaggerGen(options =>
 {
     options.AddSecurityDefinition("bearer", new OpenApiSecurityScheme
