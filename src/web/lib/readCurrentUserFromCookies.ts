@@ -13,7 +13,7 @@ export async function readCurrentUserFromCookies(): Promise<CurrentUser | null> 
   try {
     const currentUser: CurrentUser = JSON.parse(currentUserCookie.value);
     return currentUser;
-  } catch (error) {
+  } catch {
     return null;
   }
 }
