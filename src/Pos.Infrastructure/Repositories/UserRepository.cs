@@ -25,14 +25,6 @@ public class UserRepository : IUserRepository
         return userFromDatabase;
     }
 
-    public async Task<User?> GetUserByIdAsync(int userId)
-    {
-        User? userFromDatabase = await _context.Users
-            .FirstOrDefaultAsync(user => user.Id == userId);
-
-        return userFromDatabase;
-    }
-
     public async Task<bool> IsEmailRegisteredAsync(string email)
     {
         bool isEmailRegistered = await _context.Users

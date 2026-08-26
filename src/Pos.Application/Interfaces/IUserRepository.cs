@@ -7,8 +7,6 @@ public interface IUserRepository
 {
     Task<User?> GetUserByEmailAsync(string email);
 
-    Task<User?> GetUserByIdAsync(int userId);
-
     Task<bool> IsEmailRegisteredAsync(string email);
 
     Task<User> AddUserAsync(User user);
