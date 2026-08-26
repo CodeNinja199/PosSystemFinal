@@ -23,6 +23,19 @@ public class ErrorHandlingMiddleware
         try
         {
             await _next(context);
+
+            // The JWT middleware and [Authorize] write a bare 401 or 403; give them the same { message } body as every other error.
+            bool isUnauthorizedWithoutBody = context.Response.StatusCode == StatusCodes.Status401Unauthorized && context.Response.HasStarted == false;
+            if (isUnauthorizedWithoutBody)
+            {
+                await WriteErrorResponseAsync(context, StatusCodes.Status401Unauthorized, "A valid login token is required.");
+            }
+
+            bool isForbiddenWithoutBody = context.Response.StatusCode == StatusCodes.Status403Forbidden && context.Response.HasStarted == false;
+            if (isForbiddenWithoutBody)
+            {
+                await WriteErrorResponseAsync(context, StatusCodes.Status403Forbidden, "Your role may not do this.");
+            }
         }
         catch (ValidationException validationException)
         {
