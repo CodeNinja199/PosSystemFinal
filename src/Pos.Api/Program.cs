@@ -118,6 +118,7 @@ builder.Services.AddScoped<SeedDataLoader>();
 // Infrastructure tools: the hasher keeps no state, so one instance can serve every request.
 builder.Services.AddSingleton<IPasswordHasher, BcryptPasswordHasher>();
 builder.Services.AddSingleton(jwtSettings);
+builder.Services.AddSingleton<ILoginTokenCreator, JwtLoginTokenCreator>();
 
 // The Seed section: the two staff passwords from user-secrets, read once.
 SeedSettings? seedSettings = builder.Configuration.GetSection("Seed").Get<SeedSettings>();
@@ -127,7 +128,6 @@ if (seedSettings == null || seedSettings.AdminPassword.Length < 8 || seedSetting
 }
 
 builder.Services.AddSingleton(seedSettings);
-builder.Services.AddSingleton<ILoginTokenCreator, JwtLoginTokenCreator>();
 
 WebApplication app = builder.Build();
 
