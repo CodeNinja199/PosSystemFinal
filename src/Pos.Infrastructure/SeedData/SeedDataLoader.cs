@@ -10,14 +10,11 @@ using Pos.Infrastructure.Data;
 namespace Pos.Infrastructure.SeedData;
 
 // How the seed loader works here:
-// 1. Program.cs asks for this class once at startup and calls LoadAsync before the API starts listening.
-// 2. If the Stores table already has rows, nothing happens: the seed only fills an empty database.
-// 3. Otherwise it reads seed-data.json, deserializes it (JSON text -> C# objects), and for each store saves the store first so it gets an id,
-//    then its categories, then its products, then its admin and cashier with passwords from the Seed section of configuration, hashed.
-// Serialize means C# object -> JSON text; deserialize means JSON text -> C# object. PropertyNameCaseInsensitive is set because
-// the file uses camelCase names ("stockQuantity") while the C# classes use PascalCase ("StockQuantity"), and matching is case-sensitive by default.
-// Learned from: https://learn.microsoft.com/en-us/dotnet/standard/serialization/system-text-json/deserialization
-// and https://learn.microsoft.com/en-us/dotnet/standard/serialization/system-text-json/character-casing
+// 1. Program.cs asks for this class once at startup and calls LoadAsync before the API listens; if the Stores table has rows, nothing happens.
+// 2. Otherwise it reads seed-data.json and deserializes it (JSON text -> C# objects; serialize is the other direction, C# object -> JSON text).
+// 3. For each store it saves the store first so it gets an id, then its categories, then its products, then its staff with the Seed passwords, hashed.
+// PropertyNameCaseInsensitive is set because the file is camelCase ("stockQuantity") and the classes are PascalCase; matching is case-sensitive by default.
+// Learned from: https://learn.microsoft.com/en-us/dotnet/standard/serialization/system-text-json/deserialization and .../system-text-json/character-casing
 public class SeedDataLoader
 {
     private readonly PosDbContext _context;
