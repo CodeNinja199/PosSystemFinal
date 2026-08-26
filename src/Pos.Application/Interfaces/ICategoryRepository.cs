@@ -2,7 +2,7 @@ using Pos.Domain.Entities;
 
 namespace Pos.Application.Interfaces;
 
-// Implemented by InMemoryCategoryRepository in Infrastructure, later by the EF Core CategoryRepository.
+// Implemented by CategoryRepository in Infrastructure. Used by CategoryService and ProductService.
 public interface ICategoryRepository
 {
     Task<List<Category>> GetAllCategoriesAsync(int storeId);

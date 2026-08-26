@@ -2,7 +2,7 @@ using Pos.Domain.Entities;
 
 namespace Pos.Application.Interfaces;
 
-// Implemented by InMemoryProductRepository in Infrastructure, later by the EF Core ProductRepository.
+// Implemented by ProductRepository in Infrastructure. Used by ProductService and OrderService.
 public interface IProductRepository
 {
     Task<List<Product>> GetProductsAsync(int storeId, int? categoryId);
