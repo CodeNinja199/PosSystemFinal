@@ -27,7 +27,7 @@ public class OrdersController : ControllerBase
 
         OrderResponse placedOrder = await _orderService.PlaceOrderAsync(placeOrderRequest, currentUserId, storeId);
 
-        return StatusCode(StatusCodes.Status201Created, placedOrder);
+        return CreatedAtAction(nameof(GetOrderById), new { id = placedOrder.Id }, placedOrder);
     }
 
     [Authorize]
