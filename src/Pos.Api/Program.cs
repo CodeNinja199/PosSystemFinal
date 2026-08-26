@@ -31,8 +31,6 @@ if (keyVaultUrl != null)
     builder.Configuration.AddAzureKeyVault(new Uri(keyVaultUrl), new DefaultAzureCredential());
 }
 
-// Add services to the container.
-
 builder.Services.AddControllers()
     .ConfigureApiBehaviorOptions(options =>
     {
