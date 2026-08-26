@@ -58,6 +58,8 @@ public class OrderService
             Total = 0
         };
 
+        List<Product> productsBelowLowStockThreshold = new List<Product>();
+
         foreach (OrderItemRequest orderItemRequest in placeOrderRequest.Items)
         {
             bool doesProductExist = productsById.ContainsKey(orderItemRequest.ProductId);
@@ -88,13 +90,19 @@ public class OrderService
             bool isBelowLowStockThreshold = productForItem.StockQuantity <= productForItem.LowStockThreshold;
             if (isBelowLowStockThreshold)
             {
-                _logger.LogWarning("Product {ProductName} in store {StoreId} is low on stock: {StockQuantity} left", productForItem.Name, storeId, productForItem.StockQuantity);
+                productsBelowLowStockThreshold.Add(productForItem);
             }
         }
 
         await _orderRepository.SaveNewOrderAsync(newOrder);
 
         _logger.LogInformation("Order {OrderId} placed by user {UserId} in store {StoreId} for {Total}", newOrder.Id, currentUserId, storeId, newOrder.Total);
+
+        // Only after the save is confirmed: a warning for a stock level that was never saved would be a lie.
+        foreach (Product productBelowThreshold in productsBelowLowStockThreshold)
+        {
+            _logger.LogWarning("Product {ProductName} in store {StoreId} is low on stock: {StockQuantity} left", productBelowThreshold.Name, storeId, productBelowThreshold.StockQuantity);
+        }
 
         OrderResponse orderResponse = MapOrderToResponse(newOrder);
 
