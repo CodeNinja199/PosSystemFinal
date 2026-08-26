@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Logging;
+
 using Pos.Application.Dtos;
 using Pos.Application.Exceptions;
 using Pos.Application.Interfaces;
