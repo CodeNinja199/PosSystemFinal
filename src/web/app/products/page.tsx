@@ -1,16 +1,12 @@
-import { redirect } from "next/navigation";
 import { callPosApi } from "@/lib/callPosApi";
-import { readLoginTokenFromCookies } from "@/lib/readLoginTokenFromCookies";
+import { requireLoginToken } from "@/lib/requireLoginToken";
 import type { CategoryResponse } from "@/lib/types/CategoryResponse";
 import type { ProductResponse } from "@/lib/types/ProductResponse";
 import { ProductGrid } from "@/app/components/ProductGrid";
 
 // The two fetches do not depend on each other, so they run at the same time and the page waits for both.
 export default async function ProductsPage() {
-  const token = await readLoginTokenFromCookies();
-  if (token === null) {
-    redirect("/login");
-  }
+  const token = await requireLoginToken();
 
   const categoriesPromise = callPosApi("/api/categories", {
     method: "GET",

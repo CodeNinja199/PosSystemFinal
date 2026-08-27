@@ -1,14 +1,10 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
 import { callPosApi } from "@/lib/callPosApi";
-import { readLoginTokenFromCookies } from "@/lib/readLoginTokenFromCookies";
+import { requireLoginToken } from "@/lib/requireLoginToken";
 import type { OrderResponse } from "@/lib/types/OrderResponse";
 
 export default async function MyOrdersPage() {
-  const token = await readLoginTokenFromCookies();
-  if (token === null) {
-    redirect("/login");
-  }
+  const token = await requireLoginToken();
 
   const ordersResponse = await callPosApi("/api/orders/mine", {
     method: "GET",

@@ -1,7 +1,7 @@
 import Image from "next/image";
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import { callPosApi } from "@/lib/callPosApi";
-import { readLoginTokenFromCookies } from "@/lib/readLoginTokenFromCookies";
+import { requireLoginToken } from "@/lib/requireLoginToken";
 import type { CategoryResponse } from "@/lib/types/CategoryResponse";
 import type { ProductResponse } from "@/lib/types/ProductResponse";
 import { AddToCartButton } from "@/app/components/AddToCartButton";
@@ -10,10 +10,7 @@ import { AddToCartButton } from "@/app/components/AddToCartButton";
 export default async function ProductDetailPage(
   props: PageProps<"/products/[id]">,
 ) {
-  const token = await readLoginTokenFromCookies();
-  if (token === null) {
-    redirect("/login");
-  }
+  const token = await requireLoginToken();
 
   const parameters = await props.params;
   const productId = parameters.id;

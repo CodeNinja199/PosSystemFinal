@@ -1,12 +1,8 @@
-import { redirect } from "next/navigation";
-import { readLoginTokenFromCookies } from "@/lib/readLoginTokenFromCookies";
+import { requireLoginToken } from "@/lib/requireLoginToken";
 import { CheckoutForm } from "@/app/components/CheckoutForm";
 
 export default async function CheckoutPage() {
-  const token = await readLoginTokenFromCookies();
-  if (token === null) {
-    redirect("/login");
-  }
+  const token = await requireLoginToken();
 
   return (
     <div>

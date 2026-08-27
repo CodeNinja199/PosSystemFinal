@@ -1,16 +1,13 @@
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import { callPosApi } from "@/lib/callPosApi";
-import { readLoginTokenFromCookies } from "@/lib/readLoginTokenFromCookies";
+import { requireLoginToken } from "@/lib/requireLoginToken";
 import type { OrderResponse } from "@/lib/types/OrderResponse";
 
 // The receipt: one order with its lines, in a single column. A customer may only open their own; staff may open any order of the store.
 export default async function OrderReceiptPage(
   props: PageProps<"/orders/[id]">,
 ) {
-  const token = await readLoginTokenFromCookies();
-  if (token === null) {
-    redirect("/login");
-  }
+  const token = await requireLoginToken();
 
   const parameters = await props.params;
   const orderId = parameters.id;
