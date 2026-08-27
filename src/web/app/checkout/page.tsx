@@ -2,7 +2,7 @@ import { requireLoginToken } from "@/lib/requireLoginToken";
 import { CheckoutForm } from "@/app/components/CheckoutForm";
 
 export default async function CheckoutPage() {
-  const token = await requireLoginToken();
+  await requireLoginToken();
 
   return (
     <div>

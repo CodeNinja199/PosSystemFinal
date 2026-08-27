@@ -3,7 +3,7 @@ import { CartTable } from "@/app/components/CartTable";
 
 // The cart itself lives in the browser's store; the server page only checks the login and renders the table.
 export default async function CartPage() {
-  const token = await requireLoginToken();
+  await requireLoginToken();
 
   return (
     <div>
