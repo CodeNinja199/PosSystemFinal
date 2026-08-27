@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { ProductResponse } from "@/lib/types/ProductResponse";
+import { AddToCartButton } from "@/app/components/AddToCartButton";
 
 type ProductCardProps = {
   product: ProductResponse;
@@ -49,6 +50,7 @@ export function ProductCard(props: ProductCardProps) {
       <p className="text-gray-700">{categoryName}</p>
       <p>Rs {product.price}</p>
       <p>{stockText}</p>
+      <AddToCartButton product={product} />
     </li>
   );
 }

@@ -4,6 +4,7 @@ import { callPosApi } from "@/lib/callPosApi";
 import { readLoginTokenFromCookies } from "@/lib/readLoginTokenFromCookies";
 import type { CategoryResponse } from "@/lib/types/CategoryResponse";
 import type { ProductResponse } from "@/lib/types/ProductResponse";
+import { AddToCartButton } from "@/app/components/AddToCartButton";
 
 // The id comes from the folder name [id]; in Next.js 16 params is a promise, so it is awaited.
 export default async function ProductDetailPage(
@@ -76,6 +77,9 @@ export default async function ProductDetailPage(
       <p className="text-gray-700">{categoryName}</p>
       <p className="mt-2 text-xl">Rs {product.price}</p>
       <p>{stockText}</p>
+      <div className="mt-4">
+        <AddToCartButton product={product} />
+      </div>
     </div>
   );
 }
