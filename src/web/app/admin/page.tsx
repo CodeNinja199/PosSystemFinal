@@ -14,12 +14,12 @@ export default async function AdminSummaryPage() {
     body: null,
   });
   const summary: SalesSummaryResponse = await summaryResponse.json();
-  const day = new Date(summary.dayStartUtc);
+  const dayText = summary.dayStartUtc.slice(0, 10);
 
   return (
     <div className="max-w-xl">
       <h1 className="mb-4 text-2xl font-bold">Summary</h1>
-      <p>Sales for {day.toLocaleDateString()} (UTC day)</p>
+      <p>Sales for {dayText} (UTC day)</p>
       <table className="mt-2 w-full border-collapse">
         <tbody>
           <tr className="border-b border-gray-200">
