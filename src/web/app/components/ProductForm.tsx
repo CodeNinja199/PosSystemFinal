@@ -87,6 +87,18 @@ export function ProductForm(props: ProductFormProps) {
         return;
       }
 
+      if (product === null) {
+        setName("");
+        setPrice("");
+        setStockQuantity("0");
+        setLowStockThreshold("0");
+        setImageUrl("");
+        setCategoryId("");
+        setIsSubmitting(false);
+        router.refresh();
+        return;
+      }
+
       router.push("/admin/products");
       router.refresh();
     } catch {
