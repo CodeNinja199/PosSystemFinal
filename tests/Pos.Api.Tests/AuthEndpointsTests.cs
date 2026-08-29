@@ -33,4 +33,19 @@ public class AuthEndpointsTests : IClassFixture<PosApiFactory>
         Assert.Equal("Test Customer", loginBody.FullName);
         Assert.Equal("Customer", loginBody.Role);
     }
+
+    [Fact]
+    public async Task Registering_the_same_email_twice_answers_409_with_a_message()
+    {
+        string uniqueEmail = $"twice-{Guid.NewGuid()}@example.com";
+        RegisterRequest registerRequest = new RegisterRequest { FullName = "Test Customer", Email = uniqueEmail, Password = "secret123", StoreId = 1 };
+        await _client.PostAsJsonAsync("/api/auth/register", registerRequest);
+
+        HttpResponseMessage secondResponse = await _client.PostAsJsonAsync("/api/auth/register", registerRequest);
+
+        Assert.Equal(HttpStatusCode.Conflict, secondResponse.StatusCode);
+        ApiErrorBody? errorBody = await secondResponse.Content.ReadFromJsonAsync<ApiErrorBody>();
+        Assert.NotNull(errorBody);
+        Assert.Equal("Email is already registered.", errorBody.Message);
+    }
 }
