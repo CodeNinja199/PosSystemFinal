@@ -131,10 +131,13 @@ builder.Services.AddSingleton(seedSettings);
 
 WebApplication app = builder.Build();
 
-// Fill an empty database once, before the API starts listening. The scope gives the loader its own DbContext.
-using (IServiceScope seedScope = app.Services.CreateScope())
+// Bring the database up to date and fill it once, before the API starts listening. The scope gives both their own DbContext.
+using (IServiceScope startupScope = app.Services.CreateScope())
 {
-    SeedDataLoader seedDataLoader = seedScope.ServiceProvider.GetRequiredService<SeedDataLoader>();
+    PosDbContext startupContext = startupScope.ServiceProvider.GetRequiredService<PosDbContext>();
+    await startupContext.Database.MigrateAsync();
+
+    SeedDataLoader seedDataLoader = startupScope.ServiceProvider.GetRequiredService<SeedDataLoader>();
     await seedDataLoader.LoadAsync();
 }
 
