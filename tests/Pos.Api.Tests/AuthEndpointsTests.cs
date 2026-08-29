@@ -48,4 +48,18 @@ public class AuthEndpointsTests : IClassFixture<PosApiFactory>
         Assert.NotNull(errorBody);
         Assert.Equal("Email is already registered.", errorBody.Message);
     }
+
+    [Fact]
+    public async Task Registering_with_a_blank_name_and_a_short_password_answers_400_naming_both_fields()
+    {
+        RegisterRequest registerRequest = new RegisterRequest { FullName = "", Email = "blank@example.com", Password = "short", StoreId = 1 };
+
+        HttpResponseMessage response = await _client.PostAsJsonAsync("/api/auth/register", registerRequest);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        ApiErrorBody? errorBody = await response.Content.ReadFromJsonAsync<ApiErrorBody>();
+        Assert.NotNull(errorBody);
+        Assert.Contains("FullName", errorBody.Message);
+        Assert.Contains("Password", errorBody.Message);
+    }
 }
