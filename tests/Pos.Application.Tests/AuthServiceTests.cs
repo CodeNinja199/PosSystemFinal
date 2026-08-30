@@ -1,5 +1,7 @@
 using Microsoft.Extensions.Logging.Abstractions;
+
 using Moq;
+
 using Pos.Application.Dtos;
 using Pos.Application.Exceptions;
 using Pos.Application.Interfaces;

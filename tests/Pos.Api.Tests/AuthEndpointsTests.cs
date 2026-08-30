@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
+
 using Pos.Application.Dtos;
 
 namespace Pos.Api.Tests;
