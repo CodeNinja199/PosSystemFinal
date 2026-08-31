@@ -95,6 +95,9 @@ public class OrderServiceTests
         _productRepository
             .Setup(repository => repository.GetProductsByIdsAsync(It.IsAny<List<int>>(), 2))
             .ReturnsAsync(new List<Product> { chocolateBar });
+        _userRepository
+            .Setup(repository => repository.GetAdminsAsync(2))
+            .ReturnsAsync(new List<User>());
 
         OrderResponse orderResponse = await _orderService.PlaceOrderAsync(BuildRequest(4, 3), 5, 2);
 

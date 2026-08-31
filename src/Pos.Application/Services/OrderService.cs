@@ -114,9 +114,24 @@ public class OrderService
         await _notificationMessagePublisher.PublishAsync(orderPlacedMessage);
 
         // Only after the save is confirmed: a warning for a stock level that was never saved would be a lie.
-        foreach (Product productBelowThreshold in productsBelowLowStockThreshold)
+        if (productsBelowLowStockThreshold.Count > 0)
         {
-            _logger.LogWarning("Product {ProductName} in store {StoreId} is low on stock: {StockQuantity} left", productBelowThreshold.Name, storeId, productBelowThreshold.StockQuantity);
+            List<User> storeAdmins = await _userRepository.GetAdminsAsync(storeId);
+            foreach (Product productBelowThreshold in productsBelowLowStockThreshold)
+            {
+                _logger.LogWarning("Product {ProductName} in store {StoreId} is low on stock: {StockQuantity} left", productBelowThreshold.Name, storeId, productBelowThreshold.StockQuantity);
+
+                foreach (User storeAdmin in storeAdmins)
+                {
+                    NotificationMessage stockLowMessage = new NotificationMessage
+                    {
+                        Type = NotificationMessageTypes.StockLow,
+                        RecipientUserId = storeAdmin.Id,
+                        Message = $"{productBelowThreshold.Name} is low on stock: {productBelowThreshold.StockQuantity} left (threshold {productBelowThreshold.LowStockThreshold})."
+                    };
+                    await _notificationMessagePublisher.PublishAsync(stockLowMessage);
+                }
+            }
         }
 
         OrderResponse orderResponse = MapOrderToResponse(newOrder);
