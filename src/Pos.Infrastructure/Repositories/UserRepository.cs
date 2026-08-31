@@ -50,4 +50,13 @@ public class UserRepository : IUserRepository
 
         return customersFromDatabase;
     }
+
+    public async Task<List<User>> GetAdminsAsync(int storeId)
+    {
+        List<User> adminsFromDatabase = await _context.Users
+            .Where(user => user.Role == UserRole.Admin && user.StoreId == storeId)
+            .ToListAsync();
+
+        return adminsFromDatabase;
+    }
 }

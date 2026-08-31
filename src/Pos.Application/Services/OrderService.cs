@@ -16,9 +16,11 @@ public class OrderService
     private readonly IProductRepository _productRepository;
     private readonly ILogger<OrderService> _logger;
     private readonly INotificationMessagePublisher _notificationMessagePublisher;
+    private readonly IUserRepository _userRepository;
 
-    public OrderService(IOrderRepository orderRepository, IProductRepository productRepository, ILogger<OrderService> logger, INotificationMessagePublisher notificationMessagePublisher)
+    public OrderService(IOrderRepository orderRepository, IProductRepository productRepository, ILogger<OrderService> logger, INotificationMessagePublisher notificationMessagePublisher, IUserRepository userRepository)
     {
+        _userRepository = userRepository;
         _logger = logger;
         _notificationMessagePublisher = notificationMessagePublisher;
         _orderRepository = orderRepository;

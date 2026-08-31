@@ -17,6 +17,7 @@ public class OrderServiceTests
     private readonly Mock<IOrderRepository> _orderRepository;
     private readonly Mock<IProductRepository> _productRepository;
     private readonly Mock<INotificationMessagePublisher> _notificationMessagePublisher;
+    private readonly Mock<IUserRepository> _userRepository;
     private readonly OrderService _orderService;
 
     public OrderServiceTests()
@@ -24,7 +25,8 @@ public class OrderServiceTests
         _orderRepository = new Mock<IOrderRepository>();
         _productRepository = new Mock<IProductRepository>();
         _notificationMessagePublisher = new Mock<INotificationMessagePublisher>();
-        _orderService = new OrderService(_orderRepository.Object, _productRepository.Object, NullLogger<OrderService>.Instance, _notificationMessagePublisher.Object);
+        _userRepository = new Mock<IUserRepository>();
+        _orderService = new OrderService(_orderRepository.Object, _productRepository.Object, NullLogger<OrderService>.Instance, _notificationMessagePublisher.Object, _userRepository.Object);
     }
 
     private static PlaceOrderRequest BuildRequest(int productId, int quantity)
@@ -173,5 +175,39 @@ public class OrderServiceTests
         _notificationMessagePublisher.Verify(
             publisher => publisher.PublishAsync(It.Is<NotificationMessage>(message => message.Type == NotificationMessageTypes.OrderPlaced && message.RecipientUserId == 5)),
             Times.Once());
+    }
+
+    [Fact]
+    public async Task PlaceOrderAsync_publishes_one_stock_low_message_per_admin_when_a_product_reaches_its_threshold()
+    {
+        Product chocolateBar = new Product { Id = 4, StoreId = 2, Name = "Chocolate bar", Price = 150, StockQuantity = 12, LowStockThreshold = 10 };
+        _productRepository
+            .Setup(repository => repository.GetProductsByIdsAsync(It.IsAny<List<int>>(), 2))
+            .ReturnsAsync(new List<Product> { chocolateBar });
+        User storeAdmin = new User { Id = 3, StoreId = 2, Role = UserRole.Admin };
+        _userRepository
+            .Setup(repository => repository.GetAdminsAsync(2))
+            .ReturnsAsync(new List<User> { storeAdmin });
+
+        await _orderService.PlaceOrderAsync(BuildRequest(4, 3), 5, 2);
+
+        _notificationMessagePublisher.Verify(
+            publisher => publisher.PublishAsync(It.Is<NotificationMessage>(message => message.Type == NotificationMessageTypes.StockLow && message.RecipientUserId == 3)),
+            Times.Once());
+    }
+
+    [Fact]
+    public async Task PlaceOrderAsync_publishes_no_stock_low_message_when_stock_stays_above_the_threshold()
+    {
+        Product chocolateBar = new Product { Id = 4, StoreId = 2, Name = "Chocolate bar", Price = 150, StockQuantity = 80, LowStockThreshold = 10 };
+        _productRepository
+            .Setup(repository => repository.GetProductsByIdsAsync(It.IsAny<List<int>>(), 2))
+            .ReturnsAsync(new List<Product> { chocolateBar });
+
+        await _orderService.PlaceOrderAsync(BuildRequest(4, 3), 5, 2);
+
+        _notificationMessagePublisher.Verify(
+            publisher => publisher.PublishAsync(It.Is<NotificationMessage>(message => message.Type == NotificationMessageTypes.StockLow)),
+            Times.Never());
     }
 }
