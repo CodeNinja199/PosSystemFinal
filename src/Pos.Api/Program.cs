@@ -13,6 +13,7 @@ using Pos.Api.Middleware;
 using Pos.Application.Interfaces;
 using Pos.Application.Services;
 using Pos.Infrastructure.Data;
+using Pos.Infrastructure.Messaging;
 using Pos.Infrastructure.Repositories;
 using Pos.Infrastructure.Security;
 using Pos.Infrastructure.SeedData;
@@ -128,6 +129,16 @@ if (seedSettings == null || seedSettings.AdminPassword.Length < 8 || seedSetting
 }
 
 builder.Services.AddSingleton(seedSettings);
+
+// The RabbitMq section: only the host name. One publisher, one connection, for the whole app.
+RabbitMqSettings? rabbitMqSettings = builder.Configuration.GetSection("RabbitMq").Get<RabbitMqSettings>();
+if (rabbitMqSettings == null || rabbitMqSettings.Host.Length == 0)
+{
+    throw new InvalidOperationException("RabbitMq:Host must be configured.");
+}
+
+builder.Services.AddSingleton(rabbitMqSettings);
+builder.Services.AddSingleton<INotificationMessagePublisher, RabbitMqNotificationMessagePublisher>();
 
 WebApplication app = builder.Build();
 
