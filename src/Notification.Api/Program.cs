@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 
 using Notification.Api.Data;
+using Notification.Api.Messaging;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
@@ -17,6 +18,16 @@ builder.Services.AddDbContext<NotificationDbContext>(options =>
 {
     options.UseSqlServer(notificationDatabaseConnectionString);
 });
+
+// The RabbitMq section: only the host name. The consumer runs for the life of the app as a hosted service.
+RabbitMqSettings? rabbitMqSettings = builder.Configuration.GetSection("RabbitMq").Get<RabbitMqSettings>();
+if (rabbitMqSettings == null || rabbitMqSettings.Host.Length == 0)
+{
+    throw new InvalidOperationException("RabbitMq:Host must be configured.");
+}
+
+builder.Services.AddSingleton(rabbitMqSettings);
+builder.Services.AddHostedService<NotificationMessagesConsumer>();
 
 WebApplication app = builder.Build();
 
