@@ -5,6 +5,7 @@ using Moq;
 using Pos.Application.Dtos;
 using Pos.Application.Exceptions;
 using Pos.Application.Interfaces;
+using Pos.Application.Messaging;
 using Pos.Application.Services;
 using Pos.Domain.Entities;
 using Pos.Domain.Enums;
@@ -15,13 +16,15 @@ public class OrderServiceTests
 {
     private readonly Mock<IOrderRepository> _orderRepository;
     private readonly Mock<IProductRepository> _productRepository;
+    private readonly Mock<INotificationMessagePublisher> _notificationMessagePublisher;
     private readonly OrderService _orderService;
 
     public OrderServiceTests()
     {
         _orderRepository = new Mock<IOrderRepository>();
         _productRepository = new Mock<IProductRepository>();
-        _orderService = new OrderService(_orderRepository.Object, _productRepository.Object, NullLogger<OrderService>.Instance);
+        _notificationMessagePublisher = new Mock<INotificationMessagePublisher>();
+        _orderService = new OrderService(_orderRepository.Object, _productRepository.Object, NullLogger<OrderService>.Instance, _notificationMessagePublisher.Object);
     }
 
     private static PlaceOrderRequest BuildRequest(int productId, int quantity)
@@ -155,5 +158,20 @@ public class OrderServiceTests
         });
 
         Assert.Equal("Status must be Completed or Cancelled.", exception.Message);
+    }
+
+    [Fact]
+    public async Task PlaceOrderAsync_publishes_one_order_placed_message_to_the_customer_after_the_save()
+    {
+        Product chocolateBar = new Product { Id = 4, StoreId = 2, Name = "Chocolate bar", Price = 150, StockQuantity = 80, LowStockThreshold = 10 };
+        _productRepository
+            .Setup(repository => repository.GetProductsByIdsAsync(It.IsAny<List<int>>(), 2))
+            .ReturnsAsync(new List<Product> { chocolateBar });
+
+        await _orderService.PlaceOrderAsync(BuildRequest(4, 3), 5, 2);
+
+        _notificationMessagePublisher.Verify(
+            publisher => publisher.PublishAsync(It.Is<NotificationMessage>(message => message.Type == NotificationMessageTypes.OrderPlaced && message.RecipientUserId == 5)),
+            Times.Once());
     }
 }

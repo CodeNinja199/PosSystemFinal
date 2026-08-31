@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging;
 using Pos.Application.Dtos;
 using Pos.Application.Exceptions;
 using Pos.Application.Interfaces;
+using Pos.Application.Messaging;
 using Pos.Domain.Entities;
 using Pos.Domain.Enums;
 
@@ -14,10 +15,12 @@ public class OrderService
     private readonly IOrderRepository _orderRepository;
     private readonly IProductRepository _productRepository;
     private readonly ILogger<OrderService> _logger;
+    private readonly INotificationMessagePublisher _notificationMessagePublisher;
 
-    public OrderService(IOrderRepository orderRepository, IProductRepository productRepository, ILogger<OrderService> logger)
+    public OrderService(IOrderRepository orderRepository, IProductRepository productRepository, ILogger<OrderService> logger, INotificationMessagePublisher notificationMessagePublisher)
     {
         _logger = logger;
+        _notificationMessagePublisher = notificationMessagePublisher;
         _orderRepository = orderRepository;
         _productRepository = productRepository;
     }
