@@ -1,0 +1,8 @@
+# RabbitMQ runs in Docker from the first commit of the assignment phase, as the assignment requires.
+# The apps join this file at the end of Phase 9. Port 15672 is the management page in the browser.
+services:
+  rabbitmq:
+    image: rabbitmq:4-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
