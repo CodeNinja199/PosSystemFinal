@@ -7,6 +7,7 @@ using Microsoft.OpenApi;
 
 using Notification.Api.Data;
 using Notification.Api.Messaging;
+using Notification.Api.Middleware;
 using Notification.Api.Security;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
@@ -76,6 +77,9 @@ builder.Services.AddSingleton(rabbitMqSettings);
 builder.Services.AddHostedService<NotificationMessagesConsumer>();
 
 WebApplication app = builder.Build();
+
+// Error handling comes first so it wraps everything after it.
+app.UseMiddleware<ErrorHandlingMiddleware>();
 
 // Bring the database up to date before the API starts listening.
 using (IServiceScope startupScope = app.Services.CreateScope())
