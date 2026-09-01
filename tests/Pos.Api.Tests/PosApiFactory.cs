@@ -1,26 +1,18 @@
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
-using Microsoft.Extensions.Configuration;
 
 namespace Pos.Api.Tests;
 
 // Runs the real API in memory against its own test database. Follows the Microsoft docs page "Integration tests in ASP.NET Core".
-// The settings below replace user-secrets, so the tests need only LocalDB and nothing from the developer's profile.
+// The settings are environment variables, the same source Docker uses, because they are read after user-secrets and win over it;
+// values added through ConfigureAppConfiguration were read before user-secrets and silently lost.
 public class PosApiFactory : WebApplicationFactory<Program>
 {
-    protected override void ConfigureWebHost(IWebHostBuilder builder)
+    public PosApiFactory()
     {
-        Dictionary<string, string?> testSettings = new Dictionary<string, string?>
-        {
-            ["ConnectionStrings:PosDatabase"] = @"Server=(localdb)\MSSQLLocalDB;Database=PosDbTest;Trusted_Connection=True;TrustServerCertificate=True",
-            ["Jwt:Secret"] = "test-secret-that-is-at-least-thirty-two-characters-long",
-            ["Seed:AdminPassword"] = "Admin#Test2026",
-            ["Seed:CashierPassword"] = "Cashier#Test2026"
-        };
-
-        builder.ConfigureAppConfiguration(configurationBuilder =>
-        {
-            configurationBuilder.AddInMemoryCollection(testSettings);
-        });
+        Environment.SetEnvironmentVariable("ConnectionStrings__PosDatabase", @"Server=(localdb)\MSSQLLocalDB;Database=PosDbTest;Trusted_Connection=True;TrustServerCertificate=True");
+        Environment.SetEnvironmentVariable("Jwt__Secret", "test-secret-that-is-at-least-thirty-two-characters-long");
+        Environment.SetEnvironmentVariable("Seed__AdminPassword", "Admin#Test2026");
+        Environment.SetEnvironmentVariable("Seed__CashierPassword", "Cashier#Test2026");
+        Environment.SetEnvironmentVariable("RabbitMq__Host", "localhost");
     }
 }
