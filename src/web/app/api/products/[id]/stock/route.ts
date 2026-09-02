@@ -21,7 +21,7 @@ export async function PATCH(
   const parameters = await context.params;
   const adjustStockFormData: AdjustStockFormData = await request.json();
 
-  const apiResponse = await callPosApi(`/api/products/${parameters.id}/stock`, {
+  const apiResponse = await callPosApi(`/pos/products/${parameters.id}/stock`, {
     method: "PATCH",
     token: token,
     body: adjustStockFormData,

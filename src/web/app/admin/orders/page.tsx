@@ -10,7 +10,7 @@ export default async function StoreOrdersPage() {
   const token = await requireLoginToken();
   await requireRole(["Cashier", "Admin"]);
 
-  const ordersResponse = await callPosApi("/api/orders", {
+  const ordersResponse = await callPosApi("/pos/orders", {
     method: "GET",
     token: token,
     body: null,

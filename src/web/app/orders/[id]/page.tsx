@@ -12,7 +12,7 @@ export default async function OrderReceiptPage(
   const parameters = await props.params;
   const orderId = parameters.id;
 
-  const orderResponse = await callPosApi(`/api/orders/${orderId}`, {
+  const orderResponse = await callPosApi(`/pos/orders/${orderId}`, {
     method: "GET",
     token: token,
     body: null,

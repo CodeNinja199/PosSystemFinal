@@ -14,12 +14,12 @@ export default async function EditProductPage(
 
   const parameters = await props.params;
 
-  const productPromise = callPosApi(`/api/products/${parameters.id}`, {
+  const productPromise = callPosApi(`/pos/products/${parameters.id}`, {
     method: "GET",
     token: token,
     body: null,
   });
-  const categoriesPromise = callPosApi("/api/categories", {
+  const categoriesPromise = callPosApi("/pos/categories", {
     method: "GET",
     token: token,
     body: null,

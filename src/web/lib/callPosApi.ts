@@ -1,5 +1,5 @@
 // The only file that knows where the POS API is. Every page and route handler talks to the API through it.
-// POS_API_URL comes from .env.local, which is never committed; in Phase 9 it becomes GATEWAY_URL and points at the gateway.
+// GATEWAY_URL comes from .env.local, which is never committed. Paths start with /pos or /notifications: the gateway picks the API.
 export type CallPosApiOptions = {
   method: string;
   token: string | null;
@@ -10,9 +10,9 @@ export async function callPosApi(
   path: string,
   options: CallPosApiOptions,
 ): Promise<Response> {
-  const baseUrl = process.env.POS_API_URL;
+  const baseUrl = process.env.GATEWAY_URL;
   if (baseUrl === undefined) {
-    throw new Error("POS_API_URL is not configured.");
+    throw new Error("GATEWAY_URL is not configured.");
   }
 
   const headers: Record<string, string> = {};

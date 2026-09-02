@@ -10,12 +10,12 @@ export default async function AdminProductsPage() {
   const token = await requireLoginToken();
   await requireRole(["Admin"]);
 
-  const categoriesPromise = callPosApi("/api/categories", {
+  const categoriesPromise = callPosApi("/pos/categories", {
     method: "GET",
     token: token,
     body: null,
   });
-  const productsPromise = callPosApi("/api/products", {
+  const productsPromise = callPosApi("/pos/products", {
     method: "GET",
     token: token,
     body: null,

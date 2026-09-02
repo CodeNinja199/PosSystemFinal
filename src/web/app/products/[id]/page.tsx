@@ -15,12 +15,12 @@ export default async function ProductDetailPage(
   const parameters = await props.params;
   const productId = parameters.id;
 
-  const productPromise = callPosApi(`/api/products/${productId}`, {
+  const productPromise = callPosApi(`/pos/products/${productId}`, {
     method: "GET",
     token: token,
     body: null,
   });
-  const categoriesPromise = callPosApi("/api/categories", {
+  const categoriesPromise = callPosApi("/pos/categories", {
     method: "GET",
     token: token,
     body: null,

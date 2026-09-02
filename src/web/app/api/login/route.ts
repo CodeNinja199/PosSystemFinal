@@ -12,7 +12,7 @@ const OneDayInSeconds = 60 * 60 * 24;
 export async function POST(request: Request) {
   const loginFormData: LoginFormData = await request.json();
 
-  const apiResponse = await callPosApi("/api/auth/login", {
+  const apiResponse = await callPosApi("/pos/auth/login", {
     method: "POST",
     token: null,
     body: loginFormData,

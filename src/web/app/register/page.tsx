@@ -4,7 +4,7 @@ import { RegisterForm } from "@/app/components/RegisterForm";
 
 // A server component: it loads the store list on the server and hands it to the form as props.
 export default async function RegisterPage() {
-  const storesResponse = await callPosApi("/api/stores", {
+  const storesResponse = await callPosApi("/pos/stores", {
     method: "GET",
     token: null,
     body: null,

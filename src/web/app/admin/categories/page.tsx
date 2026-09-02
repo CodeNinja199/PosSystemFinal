@@ -8,7 +8,7 @@ export default async function AdminCategoriesPage() {
   const token = await requireLoginToken();
   await requireRole(["Admin"]);
 
-  const categoriesResponse = await callPosApi("/api/categories", {
+  const categoriesResponse = await callPosApi("/pos/categories", {
     method: "GET",
     token: token,
     body: null,

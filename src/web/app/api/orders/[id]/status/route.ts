@@ -23,7 +23,7 @@ export async function PATCH(
   const updateOrderStatusRequest: UpdateOrderStatusRequest =
     await request.json();
 
-  const apiResponse = await callPosApi(`/api/orders/${orderId}/status`, {
+  const apiResponse = await callPosApi(`/pos/orders/${orderId}/status`, {
     method: "PATCH",
     token: token,
     body: updateOrderStatusRequest,

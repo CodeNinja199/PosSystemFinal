@@ -7,7 +7,7 @@ export default async function AdminCustomersPage() {
   const token = await requireLoginToken();
   await requireRole(["Admin"]);
 
-  const customersResponse = await callPosApi("/api/customers", {
+  const customersResponse = await callPosApi("/pos/customers", {
     method: "GET",
     token: token,
     body: null,

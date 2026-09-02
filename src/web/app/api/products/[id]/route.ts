@@ -21,7 +21,7 @@ export async function PUT(
   const parameters = await context.params;
   const productFormData: ProductFormData = await request.json();
 
-  const apiResponse = await callPosApi(`/api/products/${parameters.id}`, {
+  const apiResponse = await callPosApi(`/pos/products/${parameters.id}`, {
     method: "PUT",
     token: token,
     body: productFormData,
@@ -54,7 +54,7 @@ export async function DELETE(
 
   const parameters = await context.params;
 
-  const apiResponse = await callPosApi(`/api/products/${parameters.id}`, {
+  const apiResponse = await callPosApi(`/pos/products/${parameters.id}`, {
     method: "DELETE",
     token: token,
     body: null,

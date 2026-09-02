@@ -6,7 +6,7 @@ import type { OrderResponse } from "@/lib/types/OrderResponse";
 export default async function MyOrdersPage() {
   const token = await requireLoginToken();
 
-  const ordersResponse = await callPosApi("/api/orders/mine", {
+  const ordersResponse = await callPosApi("/pos/orders/mine", {
     method: "GET",
     token: token,
     body: null,

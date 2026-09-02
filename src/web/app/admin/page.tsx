@@ -8,7 +8,7 @@ export default async function AdminSummaryPage() {
   const token = await requireLoginToken();
   await requireRole(["Admin"]);
 
-  const summaryResponse = await callPosApi("/api/reports/sales-summary", {
+  const summaryResponse = await callPosApi("/pos/reports/sales-summary", {
     method: "GET",
     token: token,
     body: null,

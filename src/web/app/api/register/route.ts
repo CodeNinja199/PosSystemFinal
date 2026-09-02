@@ -7,7 +7,7 @@ import type { RegisterFormData } from "@/lib/types/RegisterFormData";
 export async function POST(request: Request) {
   const registerFormData: RegisterFormData = await request.json();
 
-  const apiResponse = await callPosApi("/api/auth/register", {
+  const apiResponse = await callPosApi("/pos/auth/register", {
     method: "POST",
     token: null,
     body: registerFormData,

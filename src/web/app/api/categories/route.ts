@@ -17,7 +17,7 @@ export async function POST(request: Request) {
 
   const categoryFormData: CategoryFormData = await request.json();
 
-  const apiResponse = await callPosApi("/api/categories", {
+  const apiResponse = await callPosApi("/pos/categories", {
     method: "POST",
     token: token,
     body: categoryFormData,

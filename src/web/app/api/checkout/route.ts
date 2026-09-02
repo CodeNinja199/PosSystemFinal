@@ -17,7 +17,7 @@ export async function POST(request: Request) {
 
   const placeOrderRequest: PlaceOrderRequest = await request.json();
 
-  const apiResponse = await callPosApi("/api/orders", {
+  const apiResponse = await callPosApi("/pos/orders", {
     method: "POST",
     token: token,
     body: placeOrderRequest,
