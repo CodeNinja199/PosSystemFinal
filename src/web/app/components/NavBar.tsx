@@ -18,6 +18,7 @@ export async function NavBar() {
     links.push({ href: "/products", text: "Products" });
     links.push({ href: "/cart", text: "Cart" });
     links.push({ href: "/orders", text: "My orders" });
+    links.push({ href: "/notifications", text: "Notifications" });
     if (currentUser.role === "Cashier" || currentUser.role === "Admin") {
       links.push({ href: "/admin/orders", text: "Store orders" });
     }
