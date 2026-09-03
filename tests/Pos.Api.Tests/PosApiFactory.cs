@@ -3,8 +3,7 @@ using Microsoft.AspNetCore.Mvc.Testing;
 namespace Pos.Api.Tests;
 
 // Runs the real API in memory against its own test database. Follows the Microsoft docs page "Integration tests in ASP.NET Core".
-// The settings are environment variables, the same source Docker uses, because they are read after user-secrets and win over it;
-// values added through ConfigureAppConfiguration were read before user-secrets and silently lost.
+// Settings are environment variables, the same source Docker uses: they are read after user-secrets and win; values from ConfigureAppConfiguration were read before user-secrets and lost.
 public class PosApiFactory : WebApplicationFactory<Program>
 {
     public PosApiFactory()

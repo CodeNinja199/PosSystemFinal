@@ -8,9 +8,8 @@ using Ocelot.Middleware;
 // Follows the Ocelot docs "Getting started" page: https://ocelot.readthedocs.io/en/latest/introduction/gettingstarted.html
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
-// Locally ocelot.json points at the two APIs on localhost ports. In Docker Compose the file ocelot.Docker.json points at the service names,
-// and the compose file sets ASPNETCORE_ENVIRONMENT=Docker for the gateway so this line picks it. One whole file is chosen on purpose:
-// Ocelot's own AddOcelot() on the configuration builder would merge every ocelot.*.json file in the folder into one route list.
+// Locally ocelot.json points at localhost ports; in Docker Compose ASPNETCORE_ENVIRONMENT=Docker picks ocelot.Docker.json, which points at the service names.
+// One whole file is chosen on purpose: Ocelot's own AddOcelot() on the configuration builder would merge every ocelot.*.json in the folder into one route list.
 string ocelotFileName = "ocelot.json";
 if (builder.Environment.IsEnvironment("Docker"))
 {
