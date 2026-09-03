@@ -2,7 +2,7 @@ using Pos.Domain.Entities;
 
 namespace Pos.Application.Interfaces;
 
-// Implemented by UserRepository in Infrastructure. Used by AuthService for registration and login.
+// Implemented by UserRepository in Infrastructure. Used by AuthService (register, login), ReportService (customers), and OrderService (admins for stock.low).
 public interface IUserRepository
 {
     Task<User?> GetUserByEmailAsync(string email);
