@@ -57,7 +57,9 @@ public class NotificationMessagesConsumer : BackgroundService
         }
         catch (Exception consumerException)
         {
-            _logger.LogError(consumerException, "Could not connect to RabbitMQ at {Host}; the consumer is stopping", _rabbitMqSettings.Host);
+            // Rethrowing stops the whole app (the host's default for a failed BackgroundService), so Docker's restart brings it back once the broker answers.
+            _logger.LogError(consumerException, "Could not connect to RabbitMQ at {Host}; the Notification API is stopping", _rabbitMqSettings.Host);
+            throw;
         }
     }
 
