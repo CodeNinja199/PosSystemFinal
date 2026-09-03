@@ -64,9 +64,9 @@ public class NotificationMessagesConsumer : BackgroundService
     }
 
     // Called by the RabbitMQ client for every message; the channel is the sender.
-    private async Task HandleReceivedMessageAsync(object sender, BasicDeliverEventArgs eventArgs)
+    private async Task HandleReceivedMessageAsync(object sender, BasicDeliverEventArgs delivery)
     {
-        byte[] messageBytes = eventArgs.Body.ToArray();
+        byte[] messageBytes = delivery.Body.ToArray();
         string messageJson = Encoding.UTF8.GetString(messageBytes);
 
         JsonSerializerOptions jsonOptions = new JsonSerializerOptions
@@ -96,7 +96,7 @@ public class NotificationMessagesConsumer : BackgroundService
         }
 
         AsyncEventingBasicConsumer consumer = (AsyncEventingBasicConsumer)sender;
-        await consumer.Channel.BasicAckAsync(deliveryTag: eventArgs.DeliveryTag, multiple: false);
+        await consumer.Channel.BasicAckAsync(deliveryTag: delivery.DeliveryTag, multiple: false);
         _logger.LogInformation("Received {MessageType} for user {RecipientUserId}", message.Type, message.RecipientUserId);
     }
 }
