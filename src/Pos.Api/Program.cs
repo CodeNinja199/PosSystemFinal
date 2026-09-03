@@ -152,9 +152,10 @@ using (IServiceScope startupScope = app.Services.CreateScope())
     await seedDataLoader.LoadAsync();
 }
 
-// Configure the HTTP request pipeline. Error handling comes first so it wraps everything after it.
-app.UseMiddleware<ErrorHandlingMiddleware>();
+// Configure the HTTP request pipeline. Request logging is outermost so it times every request and sees the final status code;
+// error handling comes next so its try/catch wraps everything that can throw.
 app.UseMiddleware<RequestLoggingMiddleware>();
+app.UseMiddleware<ErrorHandlingMiddleware>();
 
 if (app.Environment.IsDevelopment())
 {

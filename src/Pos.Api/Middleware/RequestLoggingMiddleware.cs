@@ -2,7 +2,7 @@ using System.Diagnostics;
 
 namespace Pos.Api.Middleware;
 
-// Registered in Program.cs right after ErrorHandlingMiddleware, so it sees the status code the error middleware wrote.
+// Registered first in Program.cs, outside ErrorHandlingMiddleware, so a request that throws is still logged with the status code the error middleware wrote.
 public class RequestLoggingMiddleware
 {
     private readonly RequestDelegate _next;
