@@ -78,7 +78,8 @@ builder.Services.AddHostedService<NotificationMessagesConsumer>();
 
 WebApplication app = builder.Build();
 
-// Error handling comes first so it wraps everything after it.
+// Request logging is outermost so every request gets a line with its final status code; error handling comes next so it wraps everything that can throw.
+app.UseMiddleware<RequestLoggingMiddleware>();
 app.UseMiddleware<ErrorHandlingMiddleware>();
 
 // Bring the database up to date before the API starts listening.
