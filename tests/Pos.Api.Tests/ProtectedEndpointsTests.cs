@@ -15,7 +15,6 @@ public class ProtectedEndpointsTests : IClassFixture<PosApiFactory>
         _client = factory.CreateClient();
     }
 
-    // Registers a fresh customer in store 1 and returns their token.
     private async Task<string> RegisterAndLoginCustomerAsync()
     {
         string uniqueEmail = $"customer-{Guid.NewGuid()}@example.com";
