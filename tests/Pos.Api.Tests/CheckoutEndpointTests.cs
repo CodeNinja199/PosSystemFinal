@@ -34,9 +34,11 @@ public class CheckoutEndpointTests : IClassFixture<PosApiFactory>
         ProductResponse productToBuy = products[0];
         int stockBefore = productToBuy.StockQuantity;
 
+        OrderItemRequest orderItemRequest = new OrderItemRequest { ProductId = productToBuy.Id, Quantity = 2 };
+        List<OrderItemRequest> orderItems = new List<OrderItemRequest> { orderItemRequest };
         PlaceOrderRequest placeOrderRequest = new PlaceOrderRequest
         {
-            Items = new List<OrderItemRequest> { new OrderItemRequest { ProductId = productToBuy.Id, Quantity = 2 } },
+            Items = orderItems,
             PaymentMethod = PaymentMethod.Card
         };
         HttpResponseMessage orderResponse = await _client.PostAsJsonAsync("/api/orders", placeOrderRequest);
