@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { callPosApi } from "@/lib/callPosApi";
 import type { ApiErrorResponse } from "@/lib/types/ApiErrorResponse";
+import type { UserResponse } from "@/lib/types/UserResponse";
 import type { RegisterFormData } from "@/lib/types/RegisterFormData";
 
 // Called by the register page. It forwards the form to the API; the user logs in afterwards, so no cookie is set here.
@@ -21,7 +22,7 @@ export async function POST(request: Request) {
     );
   }
 
-  const registeredUser = await apiResponse.json();
+  const registeredUser: UserResponse = await apiResponse.json();
 
   return NextResponse.json(registeredUser, { status: 201 });
 }
