@@ -16,6 +16,7 @@ export function CategoryManager(props: CategoryManagerProps) {
   const router = useRouter();
   const [newCategoryName, setNewCategoryName] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
+  const [rowErrorMessage, setRowErrorMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   async function sendCategoryRequest(
@@ -24,7 +25,17 @@ export function CategoryManager(props: CategoryManagerProps) {
     body: CategoryFormData | null,
   ) {
     setErrorMessage("");
+    setRowErrorMessage("");
     setIsSubmitting(true);
+
+    // The add form shows its own error under itself; a rename or delete shows its error under the table.
+    function showErrorMessage(message: string) {
+      if (method === "POST") {
+        setErrorMessage(message);
+      } else {
+        setRowErrorMessage(message);
+      }
+    }
 
     let bodyText: string | undefined = undefined;
     if (body !== null) {
@@ -40,7 +51,7 @@ export function CategoryManager(props: CategoryManagerProps) {
 
       if (response.ok === false) {
         const errorBody: ApiErrorResponse = await response.json();
-        setErrorMessage(errorBody.message);
+        showErrorMessage(errorBody.message);
         setIsSubmitting(false);
         return;
       }
@@ -49,7 +60,7 @@ export function CategoryManager(props: CategoryManagerProps) {
       setIsSubmitting(false);
       router.refresh();
     } catch {
-      setErrorMessage("The server could not be reached.");
+      showErrorMessage("The server could not be reached.");
       setIsSubmitting(false);
     }
   }
@@ -84,6 +95,11 @@ export function CategoryManager(props: CategoryManagerProps) {
   let errorElement = null;
   if (errorMessage !== "") {
     errorElement = <p className="text-red-700">{errorMessage}</p>;
+  }
+
+  let rowErrorElement = null;
+  if (rowErrorMessage !== "") {
+    rowErrorElement = <p className="text-red-700">{rowErrorMessage}</p>;
   }
 
   let buttonText = "Add category";
@@ -127,6 +143,7 @@ export function CategoryManager(props: CategoryManagerProps) {
         </thead>
         <tbody>{rowElements}</tbody>
       </table>
+      {rowErrorElement}
     </div>
   );
 }

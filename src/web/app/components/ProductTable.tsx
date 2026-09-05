@@ -85,7 +85,6 @@ export function ProductTable(props: ProductTableProps) {
 
   return (
     <div className="flex flex-col gap-2">
-      {errorElement}
       <table className="w-full border-collapse">
         <thead>
           <tr className="border-b border-gray-300 text-left">
@@ -100,6 +99,7 @@ export function ProductTable(props: ProductTableProps) {
         </thead>
         <tbody>{rowElements}</tbody>
       </table>
+      {errorElement}
     </div>
   );
 }
