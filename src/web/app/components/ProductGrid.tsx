@@ -10,10 +10,11 @@ type ProductGridProps = {
   categories: CategoryResponse[];
 };
 
-// The interactive part of the products page: a search box and the cards that match it. Fed by props from the server page.
+// The interactive part of the products page: a category list, a search box, and the cards that match both. Fed by props from the server page.
 export function ProductGrid(props: ProductGridProps) {
   const products = props.products;
   const categories = props.categories;
+  const [selectedCategoryId, setSelectedCategoryId] = useState("");
   const [searchText, setSearchText] = useState("");
   const searchInputRef = useRef<HTMLInputElement>(null);
 
@@ -24,32 +25,44 @@ export function ProductGrid(props: ProductGridProps) {
   }, []);
 
   const filteredProducts = useMemo(
-    function filterProductsBySearchText() {
+    function filterProductsByCategoryAndSearchText() {
       const searchTextToMatch = searchText.trim().toLowerCase();
-      if (searchTextToMatch === "") {
-        return products;
-      }
 
       const matchingProducts: ProductResponse[] = [];
       for (const product of products) {
-        const isMatch = product.name.toLowerCase().includes(searchTextToMatch);
-        if (isMatch) {
+        const isInSelectedCategory =
+          selectedCategoryId === "" ||
+          String(product.categoryId) === selectedCategoryId;
+        const isSearchMatch =
+          searchTextToMatch === "" ||
+          product.name.toLowerCase().includes(searchTextToMatch);
+        if (isInSelectedCategory && isSearchMatch) {
           matchingProducts.push(product);
         }
       }
 
       return matchingProducts;
     },
-    [products, searchText],
+    [products, selectedCategoryId, searchText],
   );
+
+  function handleCategoryChange(event: React.ChangeEvent<HTMLSelectElement>) {
+    setSelectedCategoryId(event.target.value);
+  }
 
   function handleSearchTextChange(event: React.ChangeEvent<HTMLInputElement>) {
     setSearchText(event.target.value);
   }
 
   const categoryNamesById = new Map<number, string>();
+  const categoryOptionElements: React.ReactElement[] = [];
   for (const category of categories) {
     categoryNamesById.set(category.id, category.name);
+    categoryOptionElements.push(
+      <option key={category.id} value={String(category.id)}>
+        {category.name}
+      </option>,
+    );
   }
 
   const cardElements: React.ReactElement[] = [];
@@ -78,16 +91,30 @@ export function ProductGrid(props: ProductGridProps) {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-col gap-1">
-        <label htmlFor="search">Search products</label>
-        <input
-          id="search"
-          type="search"
-          ref={searchInputRef}
-          value={searchText}
-          onChange={handleSearchTextChange}
-          className="max-w-sm border border-gray-400 px-2 py-1"
-        />
+      <div className="flex flex-wrap gap-4">
+        <div className="flex flex-col gap-1">
+          <label htmlFor="category">Category</label>
+          <select
+            id="category"
+            value={selectedCategoryId}
+            onChange={handleCategoryChange}
+            className="border border-gray-400 px-2 py-1"
+          >
+            <option value="">All categories</option>
+            {categoryOptionElements}
+          </select>
+        </div>
+        <div className="flex flex-col gap-1">
+          <label htmlFor="search">Search products</label>
+          <input
+            id="search"
+            type="search"
+            ref={searchInputRef}
+            value={searchText}
+            onChange={handleSearchTextChange}
+            className="max-w-sm border border-gray-400 px-2 py-1"
+          />
+        </div>
       </div>
       {gridElement}
     </div>
