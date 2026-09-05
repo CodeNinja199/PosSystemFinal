@@ -169,8 +169,8 @@ function CategoryRow(props: CategoryRowProps) {
       <td className="py-2">{category.id}</td>
       <td className="py-2">
         <form onSubmit={handleRenameFormSubmit} className="flex gap-2">
-          <label htmlFor={`categoryName${category.id}`} className="sr-only">
-            Name of category {category.id}
+          <label htmlFor={`categoryName${category.id}`} className="self-center">
+            Name
           </label>
           <input
             id={`categoryName${category.id}`}

@@ -149,8 +149,8 @@ function ProductRow(props: ProductRowProps) {
       <td className="py-2">{product.lowStockThreshold}</td>
       <td className="py-2">
         <form onSubmit={handleStockFormSubmit} className="flex gap-2">
-          <label htmlFor={`change${product.id}`} className="sr-only">
-            Stock change for {product.name}
+          <label htmlFor={`change${product.id}`} className="self-center">
+            Change
           </label>
           <input
             id={`change${product.id}`}
