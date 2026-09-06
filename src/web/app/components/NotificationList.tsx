@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import type { ApiErrorResponse } from "@/lib/types/ApiErrorResponse";
 import type { NotificationResponse } from "@/lib/types/NotificationResponse";
 
 type NotificationListProps = {
@@ -22,7 +23,8 @@ export function NotificationList(props: NotificationListProps) {
     try {
       const response = await fetch("/api/notifications", { method: "GET" });
       if (response.ok === false) {
-        setErrorMessage("The notifications could not be loaded.");
+        const errorBody: ApiErrorResponse = await response.json();
+        setErrorMessage(errorBody.message);
         return;
       }
 
@@ -56,7 +58,8 @@ export function NotificationList(props: NotificationListProps) {
         { method: "PATCH" },
       );
       if (response.ok === false) {
-        setErrorMessage("The notification could not be marked as read.");
+        const errorBody: ApiErrorResponse = await response.json();
+        setErrorMessage(errorBody.message);
         setIsSubmitting(false);
         return;
       }
