@@ -15,6 +15,7 @@ export function NotificationList(props: NotificationListProps) {
     props.initialNotifications,
   );
   const [errorMessage, setErrorMessage] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const intervalIdRef = useRef<number | null>(null);
 
   async function loadNotifications() {
@@ -47,15 +48,25 @@ export function NotificationList(props: NotificationListProps) {
   }, []);
 
   async function markAsRead(notificationId: number) {
-    const response = await fetch(`/api/notifications/${notificationId}/read`, {
-      method: "PATCH",
-    });
-    if (response.ok === false) {
-      setErrorMessage("The notification could not be marked as read.");
-      return;
-    }
+    setIsSubmitting(true);
 
-    await loadNotifications();
+    try {
+      const response = await fetch(
+        `/api/notifications/${notificationId}/read`,
+        { method: "PATCH" },
+      );
+      if (response.ok === false) {
+        setErrorMessage("The notification could not be marked as read.");
+        setIsSubmitting(false);
+        return;
+      }
+
+      await loadNotifications();
+      setIsSubmitting(false);
+    } catch {
+      setErrorMessage("The server could not be reached.");
+      setIsSubmitting(false);
+    }
   }
 
   if (notifications.length === 0) {
@@ -68,6 +79,7 @@ export function NotificationList(props: NotificationListProps) {
       <NotificationRow
         key={notification.id}
         notification={notification}
+        isSubmitting={isSubmitting}
         markAsRead={markAsRead}
       />,
     );
@@ -80,7 +92,6 @@ export function NotificationList(props: NotificationListProps) {
 
   return (
     <div className="flex flex-col gap-2">
-      {errorElement}
       <table className="w-full border-collapse">
         <thead>
           <tr className="border-b border-gray-300 text-left">
@@ -92,17 +103,20 @@ export function NotificationList(props: NotificationListProps) {
         </thead>
         <tbody>{rowElements}</tbody>
       </table>
+      {errorElement}
     </div>
   );
 }
 
 type NotificationRowProps = {
   notification: NotificationResponse;
+  isSubmitting: boolean;
   markAsRead: (notificationId: number) => Promise<void>;
 };
 
 function NotificationRow(props: NotificationRowProps) {
   const notification = props.notification;
+  const isSubmitting = props.isSubmitting;
   const markAsRead = props.markAsRead;
   const createdAt = new Date(notification.createdAt);
 
@@ -115,7 +129,8 @@ function NotificationRow(props: NotificationRowProps) {
     <button
       type="button"
       onClick={handleMarkAsReadButtonClick}
-      className="border border-gray-400 px-2 py-1 hover:bg-gray-100"
+      disabled={isSubmitting}
+      className="border border-gray-400 px-2 py-1 hover:bg-gray-100 disabled:opacity-60"
     >
       Mark as read
     </button>
