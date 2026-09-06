@@ -140,6 +140,11 @@ function ProductRow(props: ProductRowProps) {
     await sendProductRequest(`/api/products/${product.id}`, "DELETE", null);
   }
 
+  let adjustButtonText = "Adjust";
+  if (isSubmitting) {
+    adjustButtonText = "Saving…";
+  }
+
   return (
     <tr className="border-b border-gray-200 align-top">
       <td className="py-2">{product.name}</td>
@@ -166,7 +171,7 @@ function ProductRow(props: ProductRowProps) {
             disabled={isSubmitting}
             className="border border-gray-400 px-2 py-1 hover:bg-gray-100 disabled:opacity-60"
           >
-            Adjust
+            {adjustButtonText}
           </button>
         </form>
       </td>

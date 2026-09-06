@@ -181,6 +181,11 @@ function CategoryRow(props: CategoryRowProps) {
     await sendCategoryRequest(`/api/categories/${category.id}`, "DELETE", null);
   }
 
+  let renameButtonText = "Rename";
+  if (isSubmitting) {
+    renameButtonText = "Saving…";
+  }
+
   return (
     <tr className="border-b border-gray-200">
       <td className="py-2">{category.id}</td>
@@ -202,7 +207,7 @@ function CategoryRow(props: CategoryRowProps) {
             disabled={isSubmitting}
             className="border border-gray-400 px-2 py-1 hover:bg-gray-100 disabled:opacity-60"
           >
-            Rename
+            {renameButtonText}
           </button>
         </form>
       </td>
