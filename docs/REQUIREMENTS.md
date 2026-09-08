@@ -111,11 +111,34 @@ Status codes used everywhere: 200 for a read or an update that returns data, 201
 
 36. When an order is placed, a message of type `order.placed` is published for the customer with the order id and total.
 37. When an order takes a product to or below its low-stock threshold, a message of type `stock.low` is published for every admin of that store, one message per admin per product.
-39. A message carries only the type, the recipient user id, and a text; the Notification API stores one notification row per message and then acknowledges it.
-40. A logged-in user can read their own notifications, newest first, with a read flag.
-41. A logged-in user can mark one of their notifications as read with PATCH and receives 204.
+38. A message carries only the type, the recipient user id, and a text; the Notification API stores one notification row per message and then acknowledges it.
+39. A logged-in user can read their own notifications, newest first, with a read flag.
+40. A logged-in user can mark one of their notifications as read with PATCH and receives 204.
     - a. A notification that belongs to another user returns 403.
     - b. A notification id that does not exist returns 404.
-42. Messages are kept by RabbitMQ in a durable queue until the Notification API acknowledges them, so a message published while the Notification API is down is delivered when it starts again.
-43. If RabbitMQ cannot be reached, the publisher logs the failure and returns, and the order that triggered it stays saved; on the receiving side the Notification API's consumer logs the failure and stops, and Docker restarts the Notification API until RabbitMQ is back.
+41. Messages are kept by RabbitMQ in a durable queue until the Notification API acknowledges them, so a message published while the Notification API is down is delivered when it starts again.
+42. If RabbitMQ cannot be reached, the publisher logs the failure and returns, and the order that triggered it stays saved; on the receiving side the Notification API's consumer logs the failure and stops, and Docker restarts the Notification API until RabbitMQ is back.
 
+## Gateway and services
+
+43. One gateway address forwards `/pos/...` to the POS API and `/notifications/...` to the Notification API, passing the Authorization header through unchanged.
+44. The token issued by the POS API is accepted as it is by the Notification API, because both validate with the same secret, issuer, and audience.
+45. Each API has a Swagger page with an Authorize button so every endpoint can be tried with a token before any web page exists.
+
+## Web app
+
+46. The web app renders pages on the server, keeps the token in an httpOnly cookie, deletes both cookies when the user logs out, and never lets the browser call the gateway directly.
+47. A protected page opened without a login redirects to the login page.
+48. The navigation and the buttons show only what the current role can use; the API enforces the same rules regardless.
+49. Customers can register, log in, log out, browse products by category with a search box, open a product, add to the cart, see the cart, remove an item from the cart, check out, see their orders, open a receipt, see their notifications (reloaded every 30 seconds).
+50. Cashiers can do everything a customer can, and can also see the store's orders and mark them completed or cancelled.
+51. Admins can do everything a cashier can, and can also see the sales summary with low-stock notifications, see the list of their store's customers, manage categories and manage products and stock.
+52. Every form shows a visible label per input, shows the API's error message as plain text under the form, and disables its submit button while the request runs.
+
+## Cross-cutting
+
+53. Every unexpected exception is caught by the error middleware, logged, and returned as 500 with the message "Something went wrong."; the application keeps running.
+54. Every request is logged with its method, path, status code, and duration in milliseconds; the services also log a failed login, a placed order, a product going low on stock, a message published, and a message received.
+55. Secrets (connection strings, the JWT secret, seed passwords) are never in the code or in committed files; locally they come from user-secrets, in Docker from environment variables, and when deployed from Azure Key Vault if `KeyVault:Url` is configured.
+56. The whole system starts with `docker compose up`: the database, RabbitMQ, the two APIs, the gateway, and the web app.
+57. Product images are a URL field only; there is no upload.
