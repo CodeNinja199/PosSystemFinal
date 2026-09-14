@@ -6,7 +6,7 @@ type NavLink = {
   text: string;
 };
 
-// The UI hides what a role cannot use; the API refuses the call anyway if the cookie is edited.
+// Each role gets only the links it uses. The UI hides what a role cannot use; the API refuses the call anyway if the cookie is edited.
 export async function NavBar() {
   const currentUser = await readCurrentUserFromCookies();
 
@@ -14,20 +14,22 @@ export async function NavBar() {
   if (currentUser === null) {
     links.push({ href: "/login", text: "Log in" });
     links.push({ href: "/register", text: "Register" });
-  } else {
+  } else if (currentUser.role === "Customer") {
     links.push({ href: "/products", text: "Products" });
     links.push({ href: "/cart", text: "Cart" });
     links.push({ href: "/orders", text: "My orders" });
     links.push({ href: "/notifications", text: "Notifications" });
-    if (currentUser.role === "Cashier" || currentUser.role === "Admin") {
-      links.push({ href: "/admin/orders", text: "Store orders" });
-    }
-    if (currentUser.role === "Admin") {
-      links.push({ href: "/admin", text: "Summary" });
-      links.push({ href: "/admin/categories", text: "Categories" });
-      links.push({ href: "/admin/products", text: "Manage products" });
-      links.push({ href: "/admin/customers", text: "Customers" });
-    }
+  } else if (currentUser.role === "Cashier") {
+    links.push({ href: "/products", text: "New sale" });
+    links.push({ href: "/cart", text: "Cart" });
+    links.push({ href: "/admin/orders", text: "Store orders" });
+  } else if (currentUser.role === "Admin") {
+    links.push({ href: "/admin", text: "Summary" });
+    links.push({ href: "/admin/orders", text: "Store orders" });
+    links.push({ href: "/admin/products", text: "Manage products" });
+    links.push({ href: "/admin/categories", text: "Categories" });
+    links.push({ href: "/admin/customers", text: "Customers" });
+    links.push({ href: "/notifications", text: "Notifications" });
   }
 
   const linkElements = links.map(renderNavLink);
