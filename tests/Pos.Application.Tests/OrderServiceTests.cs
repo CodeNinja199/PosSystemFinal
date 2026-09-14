@@ -262,4 +262,24 @@ public class OrderServiceTests
         Assert.Equal<decimal?>(500m, orderResponse.AmountTendered);
         Assert.Equal<decimal?>(50m, orderResponse.ChangeDue);
     }
+
+    [Fact]
+    public async Task PlaceOrderAsync_throws_ValidationException_when_an_amount_is_tendered_for_a_card_payment()
+    {
+        Product chocolateBar = new Product { Id = 4, StoreId = 2, Name = "Chocolate bar", Price = 150, StockQuantity = 80, LowStockThreshold = 10 };
+        _productRepository
+            .Setup(repository => repository.GetProductsByIdsAsync(It.IsAny<List<int>>(), 2))
+            .ReturnsAsync(new List<Product> { chocolateBar });
+        PlaceOrderRequest cardRequest = BuildRequest(4, 3);
+        cardRequest.PaymentMethod = PaymentMethod.Card;
+        cardRequest.AmountTendered = 500;
+
+        ValidationException exception = await Assert.ThrowsAsync<ValidationException>(async () =>
+        {
+            await _orderService.PlaceOrderAsync(cardRequest, 4, UserRole.Cashier, 2);
+        });
+
+        Assert.Equal("An amount tendered only applies to a cash payment.", exception.Message);
+        _orderRepository.Verify(repository => repository.SaveNewOrderAsync(It.IsAny<Order>()), Times.Never());
+    }
 }
