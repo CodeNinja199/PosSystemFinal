@@ -4,7 +4,7 @@
 # Containers reach each other by service name on the network Compose creates: the APIs use "db" and "rabbitmq",
 # the gateway uses "pos-api" and "notification-api" (ocelot.Docker.json), and the web app uses "gateway".
 # The .NET images listen on 8080 inside the network; the ports below are what the host machine sees.
-# The project name, container names, and image names are written out so Docker Desktop shows one group, pos-system,
+# The project name, container names, image names, and volume names are written out so Docker Desktop shows one group, pos-system,
 # holding pos-db, pos-api, and so on, and each of them can be stopped, started, or rebuilt on its own.
 name: pos-system
 
@@ -107,5 +107,7 @@ services:
       - gateway
     restart: unless-stopped
 
+# Named volumes outlive the containers: docker compose down keeps them, docker compose down -v deletes them.
 volumes:
   db-data:
+    name: pos-db-data
