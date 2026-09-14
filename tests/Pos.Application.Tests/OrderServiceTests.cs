@@ -302,4 +302,22 @@ public class OrderServiceTests
         Assert.Equal(80, chocolateBar.StockQuantity);
         _orderRepository.Verify(repository => repository.SaveNewOrderAsync(It.IsAny<Order>()), Times.Never());
     }
+
+    [Fact]
+    public async Task PlaceOrderAsync_throws_ValidationException_when_a_walk_in_cash_sale_has_no_amount_tendered()
+    {
+        Product chocolateBar = new Product { Id = 4, StoreId = 2, Name = "Chocolate bar", Price = 150, StockQuantity = 80, LowStockThreshold = 10 };
+        _productRepository
+            .Setup(repository => repository.GetProductsByIdsAsync(It.IsAny<List<int>>(), 2))
+            .ReturnsAsync(new List<Product> { chocolateBar });
+        PlaceOrderRequest walkInCashRequest = BuildRequest(4, 3);
+
+        ValidationException exception = await Assert.ThrowsAsync<ValidationException>(async () =>
+        {
+            await _orderService.PlaceOrderAsync(walkInCashRequest, 4, UserRole.Cashier, 2);
+        });
+
+        Assert.Equal("A cash sale at the counter needs the amount tendered.", exception.Message);
+        _orderRepository.Verify(repository => repository.SaveNewOrderAsync(It.IsAny<Order>()), Times.Never());
+    }
 }
