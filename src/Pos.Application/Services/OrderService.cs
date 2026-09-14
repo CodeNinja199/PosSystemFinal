@@ -54,12 +54,20 @@ public class OrderService
             throw new ValidationException("A payment method is required.");
         }
 
+        // A walk-in sale is paid at the counter, so it is complete the moment it is rung up. A customer's order waits for the store.
+        bool isWalkInSale = currentUserRole == UserRole.Cashier || currentUserRole == UserRole.Admin;
+        OrderStatus startingStatus = OrderStatus.Placed;
+        if (isWalkInSale)
+        {
+            startingStatus = OrderStatus.Completed;
+        }
+
         Order newOrder = new Order
         {
             StoreId = storeId,
             UserId = currentUserId,
             PlacedAt = DateTime.UtcNow,
-            Status = OrderStatus.Placed,
+            Status = startingStatus,
             PaymentMethod = placeOrderRequest.PaymentMethod.Value,
             Total = 0
         };
