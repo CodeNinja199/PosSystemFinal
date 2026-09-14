@@ -69,6 +69,7 @@ public class OrderService
             PlacedAt = DateTime.UtcNow,
             Status = startingStatus,
             PaymentMethod = placeOrderRequest.PaymentMethod.Value,
+            AmountTendered = placeOrderRequest.AmountTendered,
             Total = 0
         };
 
@@ -250,6 +251,13 @@ public class OrderService
             itemResponses.Add(itemResponse);
         }
 
+        // The change is worked out from two values on the same row, so a receipt can never drift from what was saved.
+        decimal? changeDue = null;
+        if (order.AmountTendered != null)
+        {
+            changeDue = order.AmountTendered.Value - order.Total;
+        }
+
         OrderResponse orderResponse = new OrderResponse
         {
             Id = order.Id,
@@ -258,6 +266,8 @@ public class OrderService
             Status = order.Status.ToString(),
             PaymentMethod = order.PaymentMethod.ToString(),
             Total = order.Total,
+            AmountTendered = order.AmountTendered,
+            ChangeDue = changeDue,
             Items = itemResponses
         };
 
