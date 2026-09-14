@@ -127,6 +127,10 @@ public class PosDbContext : DbContext
             .Property(order => order.Total)
             .HasPrecision(18, 2);
 
+        modelBuilder.Entity<Order>()
+            .Property(order => order.AmountTendered)
+            .HasPrecision(18, 2);
+
         // An order belongs to a user; users are never deleted, so Restrict only documents the intent.
         modelBuilder.Entity<Order>()
             .HasOne<User>()

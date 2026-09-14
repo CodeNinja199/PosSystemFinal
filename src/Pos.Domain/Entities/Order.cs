@@ -18,5 +18,8 @@ public class Order
 
     public decimal Total { get; set; }
 
+    // Null for a card payment and for a customer's online order: there was no cash to count.
+    public decimal? AmountTendered { get; set; }
+
     public List<OrderItem> Items { get; set; } = new List<OrderItem>();
 }
