@@ -39,12 +39,23 @@ export default async function OrderReceiptPage(
     );
   }
 
+  let cashElements = null;
+  if (order.amountTendered !== null && order.changeDue !== null) {
+    cashElements = (
+      <div>
+        <p>Amount tendered: Rs {order.amountTendered}</p>
+        <p>Change: Rs {order.changeDue}</p>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-xl">
       <h1 className="mb-1 text-2xl font-bold">Order {order.id}</h1>
       <p>Placed {placedAt.toLocaleString()}</p>
       <p>Status: {order.status}</p>
       <p>Payment: {order.paymentMethod}</p>
+      {cashElements}
       <table className="mt-4 w-full border-collapse">
         <thead>
           <tr className="border-b border-gray-300 text-left">
