@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { homePathForRole } from "@/lib/homePathForRole";
 import { readCurrentUserFromCookies } from "@/lib/readCurrentUserFromCookies";
 import type { CurrentUser } from "@/lib/types/CurrentUser";
 
@@ -14,7 +15,7 @@ export async function requireRole(
 
   const isAllowed = allowedRoles.includes(currentUser.role);
   if (isAllowed === false) {
-    redirect("/products");
+    redirect(homePathForRole(currentUser.role));
   }
 
   return currentUser;

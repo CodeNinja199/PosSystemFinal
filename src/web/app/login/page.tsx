@@ -2,7 +2,9 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { homePathForRole } from "@/lib/homePathForRole";
 import type { ApiErrorResponse } from "@/lib/types/ApiErrorResponse";
+import type { CurrentUser } from "@/lib/types/CurrentUser";
 import type { LoginFormData } from "@/lib/types/LoginFormData";
 
 export default function LoginPage() {
@@ -35,7 +37,8 @@ export default function LoginPage() {
         return;
       }
 
-      router.push("/products");
+      const currentUser: CurrentUser = await response.json();
+      router.push(homePathForRole(currentUser.role));
       router.refresh();
     } catch {
       setErrorMessage("The server could not be reached.");
