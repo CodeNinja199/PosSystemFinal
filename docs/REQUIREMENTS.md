@@ -76,17 +76,21 @@ Status codes used everywhere: 200 for a read or an update that returns data, 201
 ## Cart and checkout
 
 23. The cart lives in the browser only; it holds product id, name, unit price, and quantity, its total is the sum of unit price times quantity, an item can be removed from it, and it is emptied after an order is placed.
-24. Any logged-in user can place an order with a list of items (product id and quantity) and a payment method of Cash or Card, and receives 201 with the order, whose status starts as Placed.
+24. Any logged-in user can place an order with a list of items (product id and quantity), a payment method of Cash or Card, and, for a cash payment, an optional amount tendered, and receives 201 with the order; a customer's order starts as Placed, and when an amount tendered was given the order also carries the change due, which is the amount tendered minus the total.
     - a. An empty item list returns 400.
     - b. An item quantity of zero or less, or above 1000, returns 400.
     - c. A missing payment method, or one that is not Cash or Card, returns 400.
     - d. The same product listed twice in one order returns 400.
     - e. A product id that does not exist in the caller's store returns 404.
     - f. A quantity higher than the product's stock returns 409 with a message naming the product.
+    - g. An amount tendered together with a Card payment returns 400.
+    - h. An amount tendered of zero or less returns 400.
+    - i. An amount tendered that is less than the order's total returns 400 with a message naming both amounts.
 25. Placing an order saves the order and reduces the stock of every product in it in one database save, so both happen or neither does.
 26. The order copies each product's name and unit price at the time of the order, so a later price change does not change old receipts.
 27. The order's total is computed by the API from the copied prices and quantities, never taken from the request.
-28. A cashier places an order the same way; it is recorded under the cashier's user id.
+28. A cashier or admin rings up a walk-in sale the same way, on the same products page and cart; it is recorded under their own user id, and because the customer paid at the counter its status is Completed as soon as it is saved, so nobody has to complete it later.
+    - a. A walk-in sale paid in cash without an amount tendered returns 400.
 29. Only after the order is saved is the order-placed message published; a failure to publish never undoes the order.
 
 ## Orders
@@ -109,7 +113,7 @@ Status codes used everywhere: 200 for a read or an update that returns data, 201
 
 ## Notifications
 
-36. When an order is placed, a message of type `order.placed` is published for the customer with the order id and total.
+36. When a customer places an order, a message of type `order.placed` is published for that customer with the order id and total; a walk-in sale rung up by staff publishes no such message, because the buyer has no account.
 37. When an order takes a product to or below its low-stock threshold, a message of type `stock.low` is published for every admin of that store, one message per admin per product.
 38. A message carries only the type, the recipient user id, and a text; the Notification API stores one notification row per message and then acknowledges it.
 39. A logged-in user can read their own notifications, newest first, with a read flag.
@@ -129,10 +133,10 @@ Status codes used everywhere: 200 for a read or an update that returns data, 201
 
 46. The web app renders pages on the server, keeps the token in an httpOnly cookie, deletes both cookies when the user logs out, and never lets the browser call the gateway directly.
 47. A protected page opened without a login redirects to the login page.
-48. The navigation and the buttons show only what the current role can use; the API enforces the same rules regardless.
+48. The navigation and the buttons show only what the current role can use, and each role has its own links: a customer sees Products, Cart, My orders, and Notifications; a cashier sees New sale, Cart, and Store orders; an admin sees Summary, Store orders, Manage products, Categories, Customers, and Notifications; after logging in, a customer or cashier lands on the products page and an admin on the summary; the API enforces the same rules regardless.
 49. Customers can register, log in, log out, browse products by category with a search box, open a product, add to the cart, see the cart, remove an item from the cart, check out, see their orders, open a receipt, see their notifications (reloaded every 30 seconds).
-50. Cashiers can do everything a customer can, and can also see the store's orders and mark them completed or cancelled.
-51. Admins can do everything a cashier can, and can also see the sales summary with low-stock notifications, see the list of their store's customers, manage categories and manage products and stock.
+50. Cashiers use the same products page, cart, and checkout as customers to ring up walk-in sales, enter the amount tendered for a cash sale and see the change due on the receipt, and can see the store's orders and mark a customer's placed order completed or cancelled; a cashier has no orders or notifications of their own, so those links are not in the cashier's navigation, and a staff member who opens My orders is sent to Store orders.
+51. Admins can see the sales summary with low-stock notifications, see the store's orders and mark them completed or cancelled, see the list of their store's customers, manage categories, and manage products and stock; the admin's navigation has no sales screen, because ringing up sales is the cashier's job.
 52. Every form shows a visible label per input, shows the API's error message as plain text under the form, and disables its submit button while the request runs.
 
 ## Cross-cutting
