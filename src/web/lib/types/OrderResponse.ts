@@ -8,5 +8,7 @@ export type OrderResponse = {
   status: string;
   paymentMethod: string;
   total: number;
+  amountTendered: number | null;
+  changeDue: number | null;
   items: OrderItemResponse[];
 };

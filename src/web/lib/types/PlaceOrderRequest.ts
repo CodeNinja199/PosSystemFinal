@@ -4,4 +4,5 @@ import type { OrderItemRequest } from "@/lib/types/OrderItemRequest";
 export type PlaceOrderRequest = {
   items: OrderItemRequest[];
   paymentMethod: string;
+  amountTendered: number | null;
 };

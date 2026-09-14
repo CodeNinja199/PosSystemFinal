@@ -11,12 +11,18 @@ import type { OrderItemRequest } from "@/lib/types/OrderItemRequest";
 import type { OrderResponse } from "@/lib/types/OrderResponse";
 import type { PlaceOrderRequest } from "@/lib/types/PlaceOrderRequest";
 
-// Reads the cart from the store, asks for the payment method, posts to app/api/checkout, and empties the cart on success.
-export function CheckoutForm() {
+type CheckoutFormProps = {
+  isWalkInSale: boolean;
+};
+
+// Reads the cart from the store, asks for the payment method and, at the counter, the cash handed over, posts to app/api/checkout, and empties the cart on success.
+export function CheckoutForm(props: CheckoutFormProps) {
+  const isWalkInSale = props.isWalkInSale;
   const cartItems = useSelector(selectCartItems);
   const dispatch = useDispatch<AppDispatch>();
   const router = useRouter();
   const [paymentMethod, setPaymentMethod] = useState("Cash");
+  const [amountTenderedText, setAmountTenderedText] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -32,6 +38,24 @@ export function CheckoutForm() {
     [cartItems],
   );
 
+  const isCashAtTheCounter = isWalkInSale && paymentMethod === "Cash";
+
+  const changeDue = useMemo(
+    function workOutChangeDue() {
+      if (amountTenderedText === "") {
+        return null;
+      }
+
+      const amountTendered = Number(amountTenderedText);
+      if (Number.isNaN(amountTendered)) {
+        return null;
+      }
+
+      return amountTendered - cartTotal;
+    },
+    [amountTenderedText, cartTotal],
+  );
+
   async function handleCheckoutFormSubmit(
     event: React.FormEvent<HTMLFormElement>,
   ) {
@@ -43,9 +67,16 @@ export function CheckoutForm() {
     for (const item of cartItems) {
       orderItems.push({ productId: item.productId, quantity: item.quantity });
     }
+
+    let amountTendered: number | null = null;
+    if (isCashAtTheCounter) {
+      amountTendered = Number(amountTenderedText);
+    }
+
     const placeOrderRequest: PlaceOrderRequest = {
       items: orderItems,
       paymentMethod: paymentMethod,
+      amountTendered: amountTendered,
     };
 
     try {
@@ -77,6 +108,12 @@ export function CheckoutForm() {
     setPaymentMethod(event.target.value);
   }
 
+  function handleAmountTenderedChange(
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) {
+    setAmountTenderedText(event.target.value);
+  }
+
   if (cartItems.length === 0) {
     return <p>Your cart is empty.</p>;
   }
@@ -94,6 +131,45 @@ export function CheckoutForm() {
   let buttonText = "Place order";
   if (isSubmitting) {
     buttonText = "Placing order…";
+  }
+  if (isWalkInSale) {
+    buttonText = "Complete sale";
+    if (isSubmitting) {
+      buttonText = "Completing sale…";
+    }
+  }
+
+  let amountTenderedElement = null;
+  if (isCashAtTheCounter) {
+    let changeElement = null;
+    if (changeDue !== null) {
+      if (changeDue >= 0) {
+        changeElement = <p className="font-bold">Change due: Rs {changeDue}</p>;
+      } else {
+        changeElement = (
+          <p className="text-red-700">
+            That is Rs {Math.abs(changeDue)} short of the total.
+          </p>
+        );
+      }
+    }
+
+    amountTenderedElement = (
+      <div className="flex flex-col gap-1">
+        <label htmlFor="amountTendered">Amount tendered (Rs)</label>
+        <input
+          id="amountTendered"
+          type="number"
+          min="0.01"
+          step="0.01"
+          value={amountTenderedText}
+          onChange={handleAmountTenderedChange}
+          required
+          className="w-40 border border-gray-400 px-2 py-1"
+        />
+        {changeElement}
+      </div>
+    );
   }
 
   let errorElement = null;
@@ -133,6 +209,7 @@ export function CheckoutForm() {
           Card
         </label>
       </fieldset>
+      {amountTenderedElement}
       {errorElement}
       <button
         type="submit"
