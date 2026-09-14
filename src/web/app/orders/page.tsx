@@ -1,10 +1,18 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { callPosApi } from "@/lib/callPosApi";
+import { readCurrentUserFromCookies } from "@/lib/readCurrentUserFromCookies";
 import { requireLoginToken } from "@/lib/requireLoginToken";
 import type { OrderResponse } from "@/lib/types/OrderResponse";
 
 export default async function MyOrdersPage() {
   const token = await requireLoginToken();
+
+  // Staff have no orders of their own: the sales they ring up are in the store's orders.
+  const currentUser = await readCurrentUserFromCookies();
+  if (currentUser !== null && currentUser.role !== "Customer") {
+    redirect("/admin/orders");
+  }
 
   const ordersResponse = await callPosApi("/pos/orders/mine", {
     method: "GET",
