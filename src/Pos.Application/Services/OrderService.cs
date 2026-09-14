@@ -28,7 +28,7 @@ public class OrderService
     }
 
     // Order of work: check every line -> build the order and reduce stock -> one save. Nothing is written before every check passes.
-    public async Task<OrderResponse> PlaceOrderAsync(PlaceOrderRequest placeOrderRequest, int currentUserId, int storeId)
+    public async Task<OrderResponse> PlaceOrderAsync(PlaceOrderRequest placeOrderRequest, int currentUserId, UserRole currentUserRole, int storeId)
     {
         HashSet<int> productIdsSeen = new HashSet<int>();
         foreach (OrderItemRequest orderItemRequest in placeOrderRequest.Items)

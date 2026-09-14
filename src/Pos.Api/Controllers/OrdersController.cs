@@ -23,9 +23,10 @@ public class OrdersController : ControllerBase
     public async Task<IActionResult> PlaceOrder(PlaceOrderRequest placeOrderRequest)
     {
         int currentUserId = CurrentUserClaims.GetUserId(User);
+        UserRole currentUserRole = CurrentUserClaims.GetRole(User);
         int storeId = CurrentUserClaims.GetStoreId(User);
 
-        OrderResponse placedOrder = await _orderService.PlaceOrderAsync(placeOrderRequest, currentUserId, storeId);
+        OrderResponse placedOrder = await _orderService.PlaceOrderAsync(placeOrderRequest, currentUserId, currentUserRole, storeId);
 
         return CreatedAtAction(nameof(GetOrderById), new { id = placedOrder.Id }, placedOrder);
     }

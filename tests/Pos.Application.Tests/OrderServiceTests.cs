@@ -48,7 +48,7 @@ public class OrderServiceTests
 
         ValidationException exception = await Assert.ThrowsAsync<ValidationException>(async () =>
         {
-            await _orderService.PlaceOrderAsync(placeOrderRequest, 5, 2);
+            await _orderService.PlaceOrderAsync(placeOrderRequest, 5, UserRole.Customer, 2);
         });
 
         Assert.Equal("Product 4 is listed more than once.", exception.Message);
@@ -64,7 +64,7 @@ public class OrderServiceTests
 
         NotFoundException exception = await Assert.ThrowsAsync<NotFoundException>(async () =>
         {
-            await _orderService.PlaceOrderAsync(BuildRequest(999, 1), 5, 2);
+            await _orderService.PlaceOrderAsync(BuildRequest(999, 1), 5, UserRole.Customer, 2);
         });
 
         Assert.Equal("Product 999 was not found.", exception.Message);
@@ -80,7 +80,7 @@ public class OrderServiceTests
 
         ConflictException exception = await Assert.ThrowsAsync<ConflictException>(async () =>
         {
-            await _orderService.PlaceOrderAsync(BuildRequest(4, 50), 5, 2);
+            await _orderService.PlaceOrderAsync(BuildRequest(4, 50), 5, UserRole.Customer, 2);
         });
 
         Assert.Equal("Not enough stock of Chocolate bar: 8 left.", exception.Message);
@@ -99,7 +99,7 @@ public class OrderServiceTests
             .Setup(repository => repository.GetAdminsAsync(2))
             .ReturnsAsync(new List<User>());
 
-        OrderResponse orderResponse = await _orderService.PlaceOrderAsync(BuildRequest(4, 3), 5, 2);
+        OrderResponse orderResponse = await _orderService.PlaceOrderAsync(BuildRequest(4, 3), 5, UserRole.Customer, 2);
 
         Assert.Equal(450, orderResponse.Total);
         Assert.Equal("Placed", orderResponse.Status);
@@ -173,7 +173,7 @@ public class OrderServiceTests
             .Setup(repository => repository.GetProductsByIdsAsync(It.IsAny<List<int>>(), 2))
             .ReturnsAsync(new List<Product> { chocolateBar });
 
-        await _orderService.PlaceOrderAsync(BuildRequest(4, 3), 5, 2);
+        await _orderService.PlaceOrderAsync(BuildRequest(4, 3), 5, UserRole.Customer, 2);
 
         _notificationMessagePublisher.Verify(
             publisher => publisher.PublishAsync(It.Is<NotificationMessage>(message => message.Type == NotificationMessageTypes.OrderPlaced && message.RecipientUserId == 5)),
@@ -192,7 +192,7 @@ public class OrderServiceTests
             .Setup(repository => repository.GetAdminsAsync(2))
             .ReturnsAsync(new List<User> { storeAdmin });
 
-        await _orderService.PlaceOrderAsync(BuildRequest(4, 3), 5, 2);
+        await _orderService.PlaceOrderAsync(BuildRequest(4, 3), 5, UserRole.Customer, 2);
 
         _notificationMessagePublisher.Verify(
             publisher => publisher.PublishAsync(It.Is<NotificationMessage>(message => message.Type == NotificationMessageTypes.StockLow && message.RecipientUserId == 3)),
@@ -207,7 +207,7 @@ public class OrderServiceTests
             .Setup(repository => repository.GetProductsByIdsAsync(It.IsAny<List<int>>(), 2))
             .ReturnsAsync(new List<Product> { chocolateBar });
 
-        await _orderService.PlaceOrderAsync(BuildRequest(4, 3), 5, 2);
+        await _orderService.PlaceOrderAsync(BuildRequest(4, 3), 5, UserRole.Customer, 2);
 
         _notificationMessagePublisher.Verify(
             publisher => publisher.PublishAsync(It.Is<NotificationMessage>(message => message.Type == NotificationMessageTypes.StockLow)),
