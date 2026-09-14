@@ -28,6 +28,10 @@ services:
   rabbitmq:
     image: rabbitmq:4-management
     container_name: pos-rabbitmq
+    # RabbitMQ keeps its data under a folder named after its node, rabbit@<hostname>; a fixed hostname keeps that folder the same across recreates.
+    hostname: rabbitmq
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
     ports:
       - "5672:5672"
       - "15672:15672"
@@ -111,3 +115,5 @@ services:
 volumes:
   db-data:
     name: pos-db-data
+  rabbitmq-data:
+    name: pos-rabbitmq-data
