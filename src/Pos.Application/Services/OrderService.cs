@@ -68,6 +68,13 @@ public class OrderService
             startingStatus = OrderStatus.Completed;
         }
 
+        // The cashier is holding the money, so the receipt must say how much was handed over and what went back.
+        bool isCashPayment = placeOrderRequest.PaymentMethod.Value == PaymentMethod.Cash;
+        if (isWalkInSale && isCashPayment && placeOrderRequest.AmountTendered == null)
+        {
+            throw new ValidationException("A cash sale at the counter needs the amount tendered.");
+        }
+
         Order newOrder = new Order
         {
             StoreId = storeId,
