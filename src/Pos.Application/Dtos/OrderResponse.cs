@@ -14,5 +14,9 @@ public class OrderResponse
 
     public decimal Total { get; set; }
 
+    public decimal? AmountTendered { get; set; }
+
+    public decimal? ChangeDue { get; set; }
+
     public List<OrderItemResponse> Items { get; set; } = new List<OrderItemResponse>();
 }
