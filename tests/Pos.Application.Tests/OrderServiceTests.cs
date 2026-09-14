@@ -282,4 +282,24 @@ public class OrderServiceTests
         Assert.Equal("An amount tendered only applies to a cash payment.", exception.Message);
         _orderRepository.Verify(repository => repository.SaveNewOrderAsync(It.IsAny<Order>()), Times.Never());
     }
+
+    [Fact]
+    public async Task PlaceOrderAsync_throws_ValidationException_and_saves_nothing_when_the_amount_tendered_is_below_the_total()
+    {
+        Product chocolateBar = new Product { Id = 4, StoreId = 2, Name = "Chocolate bar", Price = 150, StockQuantity = 80, LowStockThreshold = 10 };
+        _productRepository
+            .Setup(repository => repository.GetProductsByIdsAsync(It.IsAny<List<int>>(), 2))
+            .ReturnsAsync(new List<Product> { chocolateBar });
+        PlaceOrderRequest shortCashRequest = BuildRequest(4, 3);
+        shortCashRequest.AmountTendered = 100;
+
+        ValidationException exception = await Assert.ThrowsAsync<ValidationException>(async () =>
+        {
+            await _orderService.PlaceOrderAsync(shortCashRequest, 4, UserRole.Cashier, 2);
+        });
+
+        Assert.Equal("Amount tendered Rs 100 is less than the total Rs 450.", exception.Message);
+        Assert.Equal(80, chocolateBar.StockQuantity);
+        _orderRepository.Verify(repository => repository.SaveNewOrderAsync(It.IsAny<Order>()), Times.Never());
+    }
 }
