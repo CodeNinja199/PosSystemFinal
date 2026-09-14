@@ -113,13 +113,17 @@ public class OrderService
         _logger.LogInformation("Order {OrderId} placed by user {UserId} in store {StoreId} for {Total}", newOrder.Id, currentUserId, storeId, newOrder.Total);
 
         // Only after the awaited save: the message must never describe an order that was not written.
-        NotificationMessage orderPlacedMessage = new NotificationMessage
+        // The buyer of a walk-in sale has no account, so there is nobody to send it to.
+        if (isWalkInSale == false)
         {
-            Type = NotificationMessageTypes.OrderPlaced,
-            RecipientUserId = currentUserId,
-            Message = $"Order {newOrder.Id} placed. Total Rs {newOrder.Total}."
-        };
-        await _notificationMessagePublisher.PublishAsync(orderPlacedMessage);
+            NotificationMessage orderPlacedMessage = new NotificationMessage
+            {
+                Type = NotificationMessageTypes.OrderPlaced,
+                RecipientUserId = currentUserId,
+                Message = $"Order {newOrder.Id} placed. Total Rs {newOrder.Total}."
+            };
+            await _notificationMessagePublisher.PublishAsync(orderPlacedMessage);
+        }
 
         // Only after the save is confirmed: a warning for a stock level that was never saved would be a lie.
         if (productsBelowLowStockThreshold.Count > 0)
