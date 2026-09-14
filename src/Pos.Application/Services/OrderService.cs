@@ -54,6 +54,12 @@ public class OrderService
             throw new ValidationException("A payment method is required.");
         }
 
+        bool isCardPayment = placeOrderRequest.PaymentMethod.Value == PaymentMethod.Card;
+        if (isCardPayment && placeOrderRequest.AmountTendered != null)
+        {
+            throw new ValidationException("An amount tendered only applies to a cash payment.");
+        }
+
         // A walk-in sale is paid at the counter, so it is complete the moment it is rung up. A customer's order waits for the store.
         bool isWalkInSale = currentUserRole == UserRole.Cashier || currentUserRole == UserRole.Admin;
         OrderStatus startingStatus = OrderStatus.Placed;
