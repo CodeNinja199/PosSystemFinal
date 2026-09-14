@@ -59,4 +59,41 @@ public class CheckoutEndpointTests : IClassFixture<PosApiFactory>
         Assert.NotNull(productAfter);
         Assert.Equal(stockBefore - 2, productAfter.StockQuantity);
     }
+
+    [Fact]
+    public async Task A_cashiers_cash_sale_is_completed_at_once_and_the_receipt_shows_the_change()
+    {
+        LoginRequest cashierLoginRequest = new LoginRequest { Email = "cashier@downtown.local", Password = "Cashier#Test2026" };
+        HttpResponseMessage loginResponse = await _client.PostAsJsonAsync("/api/auth/login", cashierLoginRequest);
+        LoginResponse? loginBody = await loginResponse.Content.ReadFromJsonAsync<LoginResponse>();
+        Assert.NotNull(loginBody);
+        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", loginBody.Token);
+
+        HttpResponseMessage productsResponse = await _client.GetAsync("/api/products");
+        List<ProductResponse>? products = await productsResponse.Content.ReadFromJsonAsync<List<ProductResponse>>();
+        Assert.NotNull(products);
+        ProductResponse productToSell = products[0];
+
+        OrderItemRequest orderItemRequest = new OrderItemRequest { ProductId = productToSell.Id, Quantity = 1 };
+        List<OrderItemRequest> orderItems = new List<OrderItemRequest> { orderItemRequest };
+        PlaceOrderRequest walkInSaleRequest = new PlaceOrderRequest
+        {
+            Items = orderItems,
+            PaymentMethod = PaymentMethod.Cash,
+            AmountTendered = productToSell.Price + 50
+        };
+        HttpResponseMessage saleResponse = await _client.PostAsJsonAsync("/api/orders", walkInSaleRequest);
+
+        Assert.Equal(HttpStatusCode.Created, saleResponse.StatusCode);
+        OrderResponse? sale = await saleResponse.Content.ReadFromJsonAsync<OrderResponse>();
+        Assert.NotNull(sale);
+        Assert.Equal("Completed", sale.Status);
+        Assert.Equal<decimal?>(50m, sale.ChangeDue);
+
+        HttpResponseMessage receiptResponse = await _client.GetAsync($"/api/orders/{sale.Id}");
+        OrderResponse? receipt = await receiptResponse.Content.ReadFromJsonAsync<OrderResponse>();
+        Assert.NotNull(receipt);
+        Assert.Equal<decimal?>(productToSell.Price + 50, receipt.AmountTendered);
+        Assert.Equal<decimal?>(50m, receipt.ChangeDue);
+    }
 }
