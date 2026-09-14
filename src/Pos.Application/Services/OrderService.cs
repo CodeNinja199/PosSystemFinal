@@ -27,7 +27,7 @@ public class OrderService
         _productRepository = productRepository;
     }
 
-    // Order of work: check every line -> build the order and reduce stock -> one save. Nothing is written before every check passes.
+    // Order of work: check and price every line -> check the cash covers the total -> reduce stock -> one save. Nothing is written before every check passes.
     public async Task<OrderResponse> PlaceOrderAsync(PlaceOrderRequest placeOrderRequest, int currentUserId, UserRole currentUserRole, int storeId)
     {
         HashSet<int> productIdsSeen = new HashSet<int>();
@@ -79,8 +79,6 @@ public class OrderService
             Total = 0
         };
 
-        List<Product> productsBelowLowStockThreshold = new List<Product>();
-
         foreach (OrderItemRequest orderItemRequest in placeOrderRequest.Items)
         {
             bool doesProductExist = productsById.ContainsKey(orderItemRequest.ProductId);
@@ -105,8 +103,23 @@ public class OrderService
             };
             newOrder.Items.Add(orderItem);
             newOrder.Total = newOrder.Total + productForItem.Price * orderItemRequest.Quantity;
+        }
 
-            productForItem.StockQuantity = productForItem.StockQuantity - orderItemRequest.Quantity;
+        // The total is only known once every line is priced, and stock must not move for a sale the cash does not cover.
+        if (placeOrderRequest.AmountTendered != null)
+        {
+            bool coversTheTotal = placeOrderRequest.AmountTendered.Value >= newOrder.Total;
+            if (coversTheTotal == false)
+            {
+                throw new ValidationException($"Amount tendered Rs {placeOrderRequest.AmountTendered.Value} is less than the total Rs {newOrder.Total}.");
+            }
+        }
+
+        List<Product> productsBelowLowStockThreshold = new List<Product>();
+        foreach (OrderItem orderItem in newOrder.Items)
+        {
+            Product productForItem = productsById[orderItem.ProductId];
+            productForItem.StockQuantity = productForItem.StockQuantity - orderItem.Quantity;
 
             bool isBelowLowStockThreshold = productForItem.StockQuantity <= productForItem.LowStockThreshold;
             if (isBelowLowStockThreshold)
