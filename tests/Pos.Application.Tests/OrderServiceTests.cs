@@ -245,4 +245,21 @@ public class OrderServiceTests
             publisher => publisher.PublishAsync(It.Is<NotificationMessage>(message => message.Type == NotificationMessageTypes.OrderPlaced)),
             Times.Never());
     }
+
+    [Fact]
+    public async Task PlaceOrderAsync_returns_the_change_due_when_the_amount_tendered_covers_the_total()
+    {
+        Product chocolateBar = new Product { Id = 4, StoreId = 2, Name = "Chocolate bar", Price = 150, StockQuantity = 80, LowStockThreshold = 10 };
+        _productRepository
+            .Setup(repository => repository.GetProductsByIdsAsync(It.IsAny<List<int>>(), 2))
+            .ReturnsAsync(new List<Product> { chocolateBar });
+        PlaceOrderRequest cashSaleRequest = BuildRequest(4, 3);
+        cashSaleRequest.AmountTendered = 500;
+
+        OrderResponse orderResponse = await _orderService.PlaceOrderAsync(cashSaleRequest, 4, UserRole.Cashier, 2);
+
+        Assert.Equal(450, orderResponse.Total);
+        Assert.Equal<decimal?>(500m, orderResponse.AmountTendered);
+        Assert.Equal<decimal?>(50m, orderResponse.ChangeDue);
+    }
 }
