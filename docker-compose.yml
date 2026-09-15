@@ -1,90 +1,147 @@
-# The whole system in one command: docker compose up --build
-# Compose reads the ${...} values from a .env file next to this file (copy .env.example to .env and fill it in; .env is ignored by git)
-# and passes them to the containers as environment variables, which is where secrets live in Docker.
-# Containers reach each other by service name on the network Compose creates: the APIs use "db" and "rabbitmq",
-# the gateway uses "pos-api" and "notification-api" (ocelot.Docker.json), and the web app uses "gateway".
-# The .NET images listen on 8080 inside the network; the ports below are what the host machine sees.
-# The project name, container names, image names, and volume names are written out so Docker Desktop shows one group, pos-system,
-# holding pos-db, pos-api, and so on, and each of them can be stopped, started, or rebuilt on its own.
+# ============================================================================
+# THE WHOLE POS SYSTEM IN ONE FILE
+#
+#   Start it:  open Docker Desktop and press play on the "pos-system" group,
+#              or run  docker compose up -d
+#   Stop it:   press stop on the same group, or run  docker compose stop
+#
+# Every container is named in plain English and numbered, so Docker Desktop
+# lists them in the order they start. Each one has its own play / stop /
+# restart buttons and its own Logs tab.
+#
+#   pos-01-database           SQL Server. Holds the data.
+#   pos-02-rabbitmq           The message queue.
+#   pos-03-shop-api           Products, orders, login.          Swagger :5024
+#   pos-04-notifications-api  Turns queue messages into rows.   Swagger :5026
+#   pos-05-gateway            One address in front of both APIs.
+#   pos-06-website            The website you click around in.  :3000
+#   pos-07-database-viewer    Look inside the database.         :8081
+#
+# Passwords come from the .env file next to this one. .env is not in git.
+# ============================================================================
+
 name: pos-system
 
 services:
-  db:
+  # --------------------------------------------------------------------------
+  # THE DATABASE. Two databases live in here: PosDb for the shop and
+  # NotificationDb for the notification service.
+  database:
     image: mcr.microsoft.com/mssql/server:2022-latest
-    container_name: pos-db
+    container_name: pos-01-database
     environment:
       ACCEPT_EULA: "Y"
       MSSQL_SA_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "1433:1433"
     volumes:
       - db-data:/var/opt/mssql
     healthcheck:
       test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P \"$$MSSQL_SA_PASSWORD\" -C -Q \"SELECT 1\" || exit 1"]
       interval: 10s
       timeout: 5s
-      retries: 10
-      start_period: 30s
+      retries: 30
+      start_period: 120s
+      start_interval: 3s
     restart: unless-stopped
 
+  # --------------------------------------------------------------------------
+  # THE MESSAGE QUEUE. The shop API drops messages in; the notifications API
+  # picks them up. Its own web page is at http://localhost:15672 (guest/guest).
   rabbitmq:
     image: rabbitmq:4-management
-    container_name: pos-rabbitmq
-    # RabbitMQ keeps its data under a folder named after its node, rabbit@<hostname>; a fixed hostname keeps that folder the same across recreates.
+    container_name: pos-02-rabbitmq
+    # RabbitMQ stores its data in a folder named after its node, rabbit@<hostname>.
+    # Fixing the hostname keeps that folder the same every time the container is recreated.
     hostname: rabbitmq
-    volumes:
-      - rabbitmq-data:/var/lib/rabbitmq
     ports:
       - "5672:5672"
       - "15672:15672"
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
     healthcheck:
       test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
       interval: 10s
       timeout: 5s
-      retries: 10
+      retries: 20
+      start_period: 90s
+      start_interval: 3s
     restart: unless-stopped
 
-  pos-api:
-    image: pos-system/pos-api
-    container_name: pos-api
+  # --------------------------------------------------------------------------
+  # THE SHOP API. Accounts, stores, categories, products, orders, reports.
+  # Swagger page: http://localhost:5024/swagger
+  shop-api:
+    image: pos-system/shop-api
+    container_name: pos-03-shop-api
     build:
       context: .
       dockerfile: src/Pos.Api/Dockerfile
     environment:
-      ConnectionStrings__PosDatabase: "Server=db;Database=PosDb;User Id=sa;Password=${DB_PASSWORD};TrustServerCertificate=True"
+      ConnectionStrings__PosDatabase: "Server=database;Database=PosDb;User Id=sa;Password=${DB_PASSWORD};TrustServerCertificate=True"
       Jwt__Secret: ${JWT_SECRET}
       Seed__AdminPassword: ${SEED_ADMIN_PASSWORD}
       Seed__CashierPassword: ${SEED_CASHIER_PASSWORD}
       RabbitMq__Host: rabbitmq
     ports:
       - "5024:8080"
+    # curl is installed by src/Pos.Api/Dockerfile on purpose. The Microsoft .NET
+    # image has no curl, wget or nc of its own; delete that line from the
+    # Dockerfile and this healthcheck can never pass, which would stop the
+    # gateway and the website from ever starting.
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8080/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 90s
+      start_interval: 3s
     depends_on:
-      db:
+      database:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
     restart: unless-stopped
 
-  notification-api:
-    image: pos-system/notification-api
-    container_name: pos-notification-api
+  # --------------------------------------------------------------------------
+  # THE NOTIFICATIONS API. Reads the queue and saves one row per message.
+  # >>> STOP THIS ONE to show that the queue holds messages while it is away.
+  notifications-api:
+    image: pos-system/notifications-api
+    container_name: pos-04-notifications-api
     build:
       context: .
       dockerfile: src/Notification.Api/Dockerfile
     environment:
-      ConnectionStrings__NotificationDatabase: "Server=db;Database=NotificationDb;User Id=sa;Password=${DB_PASSWORD};TrustServerCertificate=True"
+      ConnectionStrings__NotificationDatabase: "Server=database;Database=NotificationDb;User Id=sa;Password=${DB_PASSWORD};TrustServerCertificate=True"
       Jwt__Secret: ${JWT_SECRET}
       RabbitMq__Host: rabbitmq
     ports:
       - "5026:8080"
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8080/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 90s
+      start_interval: 3s
     depends_on:
-      db:
+      database:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
+    # "unless-stopped" means Docker restarts it by itself if it crashes, but NOT
+    # after you stop it by hand. A container you stop stays stopped until you
+    # press play again, which is exactly what the queue demo needs.
     restart: unless-stopped
 
+  # --------------------------------------------------------------------------
+  # THE GATEWAY. One address in front of both APIs:
+  #   http://localhost:5000/pos/...            goes to the shop API
+  #   http://localhost:5000/notifications/...  goes to the notifications API
   gateway:
     image: pos-system/gateway
-    container_name: pos-gateway
+    container_name: pos-05-gateway
     build:
       context: .
       dockerfile: src/Pos.Gateway/Dockerfile
@@ -92,14 +149,26 @@ services:
       ASPNETCORE_ENVIRONMENT: Docker
     ports:
       - "5000:8080"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s -o /dev/null http://127.0.0.1:8080/pos/stores"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 60s
+      start_interval: 3s
     depends_on:
-      - pos-api
-      - notification-api
+      shop-api:
+        condition: service_healthy
+      notifications-api:
+        condition: service_healthy
     restart: unless-stopped
 
-  web:
-    image: pos-system/web
-    container_name: pos-web
+  # --------------------------------------------------------------------------
+  # THE WEBSITE. Pages are built on the server, so the browser never talks to
+  # the APIs directly. http://localhost:3000
+  website:
+    image: pos-system/website
+    container_name: pos-06-website
     build:
       context: .
       dockerfile: src/web/Dockerfile
@@ -107,11 +176,45 @@ services:
       GATEWAY_URL: http://gateway:8080
     ports:
       - "3000:3000"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1:3000/login"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 60s
+      start_interval: 3s
     depends_on:
-      - gateway
+      gateway:
+        condition: service_healthy
     restart: unless-stopped
 
-# Named volumes outlive the containers: docker compose down keeps them, docker compose down -v deletes them.
+  # --------------------------------------------------------------------------
+  # THE DATABASE VIEWER (Adminer). Browse the tables at http://localhost:8081
+  # On its login page: System "MS SQL", Server "database", Username "sa".
+  # The plain Adminer image already knows how to talk to SQL Server, so there
+  # is nothing to build here.
+  database-viewer:
+    image: adminer:latest
+    container_name: pos-07-database-viewer
+    environment:
+      ADMINER_DEFAULT_SERVER: database
+      ADMINER_DESIGN: dracula
+    ports:
+      - "8081:8080"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1:8080/"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    depends_on:
+      database:
+        condition: service_healthy
+    restart: unless-stopped
+
+# The data lives in these two named volumes, so it survives a stop.
+#   docker compose stop      keeps the data
+#   docker compose down -v   deletes the data, so the next start begins fresh
 volumes:
   db-data:
     name: pos-db-data

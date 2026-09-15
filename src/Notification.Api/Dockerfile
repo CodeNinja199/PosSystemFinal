@@ -6,6 +6,9 @@ COPY src/Notification.Api/ src/Notification.Api/
 RUN dotnet publish src/Notification.Api/Notification.Api.csproj -c Release -o /app
 
 FROM mcr.microsoft.com/dotnet/aspnet:10.0
+# curl is here so Docker's healthcheck can ask the app whether it is really answering,
+# which is what puts the green 'healthy' badge next to the container in Docker Desktop.
+RUN apt-get update && apt-get install -y --no-install-recommends curl && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 COPY --from=build /app .
 ENTRYPOINT ["dotnet", "Notification.Api.dll"]
