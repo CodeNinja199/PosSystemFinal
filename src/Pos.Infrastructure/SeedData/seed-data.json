@@ -1,43 +1,43 @@
 {
   "stores": [
     {
-      "name": "Downtown Store",
+      "name": "Riverside Mart",
       "users": [
-        { "fullName": "Downtown Admin", "email": "admin@downtown.local", "role": "Admin" },
-        { "fullName": "Downtown Cashier", "email": "cashier@downtown.local", "role": "Cashier" }
+        { "fullName": "Nadia Rahman", "email": "admin@riversidemart.test", "role": "Admin" },
+        { "fullName": "Imran Qureshi", "email": "cashier@riversidemart.test", "role": "Cashier" }
       ],
       "categories": [
-        { "name": "Drinks" },
-        { "name": "Snacks" },
-        { "name": "Stationery" }
+        { "name": "Beverages" },
+        { "name": "Bakery" },
+        { "name": "Household" }
       ],
       "products": [
-        { "name": "Mineral water 500ml", "price": 60, "stockQuantity": 120, "lowStockThreshold": 20, "imageUrl": null, "categoryName": "Drinks" },
-        { "name": "Orange juice 1L", "price": 250, "stockQuantity": 30, "lowStockThreshold": 10, "imageUrl": null, "categoryName": "Drinks" },
-        { "name": "Salted chips 50g", "price": 80, "stockQuantity": 200, "lowStockThreshold": 40, "imageUrl": null, "categoryName": "Snacks" },
-        { "name": "Chocolate bar", "price": 150, "stockQuantity": 8, "lowStockThreshold": 10, "imageUrl": null, "categoryName": "Snacks" },
-        { "name": "Ballpoint pen", "price": 40, "stockQuantity": 500, "lowStockThreshold": 50, "imageUrl": null, "categoryName": "Stationery" },
-        { "name": "Notebook A5", "price": 220, "stockQuantity": 45, "lowStockThreshold": 15, "imageUrl": null, "categoryName": "Stationery" }
+        { "name": "Spring Water 500ml", "price": 60, "stockQuantity": 150, "lowStockThreshold": 20, "imageUrl": null, "categoryName": "Beverages" },
+        { "name": "Cold Brew Coffee 250ml", "price": 320, "stockQuantity": 40, "lowStockThreshold": 10, "imageUrl": null, "categoryName": "Beverages" },
+        { "name": "Sourdough Loaf", "price": 240, "stockQuantity": 25, "lowStockThreshold": 8, "imageUrl": null, "categoryName": "Bakery" },
+        { "name": "Butter Croissant", "price": 130, "stockQuantity": 12, "lowStockThreshold": 10, "imageUrl": null, "categoryName": "Bakery" },
+        { "name": "Dish Soap 1L", "price": 310, "stockQuantity": 60, "lowStockThreshold": 15, "imageUrl": null, "categoryName": "Household" },
+        { "name": "Paper Towels 2pk", "price": 180, "stockQuantity": 9, "lowStockThreshold": 12, "imageUrl": null, "categoryName": "Household" }
       ]
     },
     {
-      "name": "Airport Store",
+      "name": "Harbour Plaza",
       "users": [
-        { "fullName": "Airport Admin", "email": "admin@airport.local", "role": "Admin" },
-        { "fullName": "Airport Cashier", "email": "cashier@airport.local", "role": "Cashier" }
+        { "fullName": "Sana Iqbal", "email": "admin@harbourplaza.test", "role": "Admin" },
+        { "fullName": "Bilal Ahmed", "email": "cashier@harbourplaza.test", "role": "Cashier" }
       ],
       "categories": [
-        { "name": "Drinks" },
-        { "name": "Snacks" },
-        { "name": "Travel" }
+        { "name": "Beverages" },
+        { "name": "Travel" },
+        { "name": "Electronics" }
       ],
       "products": [
-        { "name": "Mineral water 500ml", "price": 120, "stockQuantity": 300, "lowStockThreshold": 50, "imageUrl": null, "categoryName": "Drinks" },
-        { "name": "Coffee 250ml", "price": 350, "stockQuantity": 60, "lowStockThreshold": 15, "imageUrl": null, "categoryName": "Drinks" },
-        { "name": "Mixed nuts 100g", "price": 400, "stockQuantity": 40, "lowStockThreshold": 10, "imageUrl": null, "categoryName": "Snacks" },
-        { "name": "Sandwich", "price": 550, "stockQuantity": 12, "lowStockThreshold": 15, "imageUrl": null, "categoryName": "Snacks" },
-        { "name": "Neck pillow", "price": 1800, "stockQuantity": 20, "lowStockThreshold": 5, "imageUrl": null, "categoryName": "Travel" },
-        { "name": "Power bank", "price": 3500, "stockQuantity": 9, "lowStockThreshold": 5, "imageUrl": null, "categoryName": "Travel" }
+        { "name": "Spring Water 500ml", "price": 120, "stockQuantity": 200, "lowStockThreshold": 40, "imageUrl": null, "categoryName": "Beverages" },
+        { "name": "Iced Tea 330ml", "price": 190, "stockQuantity": 55, "lowStockThreshold": 12, "imageUrl": null, "categoryName": "Beverages" },
+        { "name": "Travel Neck Pillow", "price": 1750, "stockQuantity": 18, "lowStockThreshold": 5, "imageUrl": null, "categoryName": "Travel" },
+        { "name": "Luggage Tag", "price": 450, "stockQuantity": 30, "lowStockThreshold": 10, "imageUrl": null, "categoryName": "Travel" },
+        { "name": "Power Bank 10000mAh", "price": 3600, "stockQuantity": 7, "lowStockThreshold": 5, "imageUrl": null, "categoryName": "Electronics" },
+        { "name": "USB-C Cable 1m", "price": 690, "stockQuantity": 24, "lowStockThreshold": 6, "imageUrl": null, "categoryName": "Electronics" }
       ]
     }
   ]

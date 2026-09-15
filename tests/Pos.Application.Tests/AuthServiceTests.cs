@@ -57,7 +57,7 @@ public class AuthServiceTests
         _userRepository
             .Setup(repository => repository.IsEmailRegisteredAsync("ana@example.com"))
             .ReturnsAsync(false);
-        Store store = new Store { Id = 2, Name = "Airport Store" };
+        Store store = new Store { Id = 2, Name = "Harbour Plaza" };
         _storeRepository
             .Setup(repository => repository.GetStoreByIdAsync(2))
             .ReturnsAsync(store);

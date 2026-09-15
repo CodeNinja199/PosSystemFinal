@@ -63,7 +63,7 @@ public class CheckoutEndpointTests : IClassFixture<PosApiFactory>
     [Fact]
     public async Task A_cashiers_cash_sale_is_completed_at_once_and_the_receipt_shows_the_change()
     {
-        LoginRequest cashierLoginRequest = new LoginRequest { Email = "cashier@downtown.local", Password = "Cashier#Test2026" };
+        LoginRequest cashierLoginRequest = new LoginRequest { Email = "cashier@riversidemart.test", Password = "Cashier#Test2026" };
         HttpResponseMessage loginResponse = await _client.PostAsJsonAsync("/api/auth/login", cashierLoginRequest);
         LoginResponse? loginBody = await loginResponse.Content.ReadFromJsonAsync<LoginResponse>();
         Assert.NotNull(loginBody);
