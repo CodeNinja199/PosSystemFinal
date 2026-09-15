@@ -89,14 +89,18 @@ using (IServiceScope startupScope = app.Services.CreateScope())
     await startupContext.Database.MigrateAsync();
 }
 
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+// Swagger is mapped in every environment, not just Development: it is how this API is demonstrated and tried out.
+app.UseSwagger();
+app.UseSwaggerUI();
 
 app.UseAuthentication();
 app.UseAuthorization();
+
+// A tiny unauthenticated endpoint so Docker (and Docker Desktop) can tell whether this service is really up.
+app.MapGet("/health", () =>
+{
+    return Results.Ok(new { status = "healthy", service = "notification-api" });
+}).AllowAnonymous();
 
 app.MapControllers();
 
