@@ -5,7 +5,7 @@ namespace Pos.Api.Middleware;
 // How the error middleware works here:
 // 1. It wraps every request in one try/catch around _next, the way the Microsoft docs page "Write custom ASP.NET Core middleware" shows.
 // 2. A named exception thrown by a service (Validation, Unauthorized, Forbidden, NotFound, Conflict) becomes its status code and a { message } body.
-// 3. Anything else is logged and becomes 500 with "Something went wrong", so one failing request never crashes the application.
+// 3. Anything else is logged and becomes 500 with "Something went wrong.", so one failing request never crashes the application.
 // Learned from: https://learn.microsoft.com/en-us/aspnet/core/fundamentals/middleware/write
 public class ErrorHandlingMiddleware
 {
@@ -60,7 +60,7 @@ public class ErrorHandlingMiddleware
         catch (Exception unexpectedException)
         {
             _logger.LogError(unexpectedException, "Unhandled exception while handling {Method} {Path}", context.Request.Method, context.Request.Path);
-            await WriteErrorResponseAsync(context, StatusCodes.Status500InternalServerError, "Something went wrong");
+            await WriteErrorResponseAsync(context, StatusCodes.Status500InternalServerError, "Something went wrong.");
         }
     }
 

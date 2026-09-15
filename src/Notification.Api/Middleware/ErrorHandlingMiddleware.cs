@@ -43,7 +43,7 @@ public class ErrorHandlingMiddleware
         catch (Exception unexpectedException)
         {
             _logger.LogError(unexpectedException, "Unhandled exception while handling {Method} {Path}", context.Request.Method, context.Request.Path);
-            await WriteErrorResponseAsync(context, StatusCodes.Status500InternalServerError, "Something went wrong");
+            await WriteErrorResponseAsync(context, StatusCodes.Status500InternalServerError, "Something went wrong.");
         }
     }
 
