@@ -75,7 +75,7 @@ Status codes used everywhere: 200 for a read or an update that returns data, 201
 
 ## Cart and checkout
 
-23. The cart lives in the browser only; it holds product id, name, unit price, and quantity, its total is the sum of unit price times quantity, an item can be removed from it, and it is emptied after an order is placed.
+23. The cart lives in the browser only; it holds product id, name, unit price, and quantity, its subtotal is the sum of unit price times quantity, an item can be removed from it, and it is emptied after an order is placed. The cart shows a subtotal and not a total, because the discount and the tax are worked out by the API when the order is placed.
 24. Any logged-in user can place an order with a list of items (product id and quantity), a payment method of Cash or Card, and, for a cash payment, an optional amount tendered, and receives 201 with the order; a customer's order starts as Placed, and when an amount tendered was given the order also carries the change due, which is the amount tendered minus the total.
     - a. An empty item list returns 400.
     - b. An item quantity of zero or less, or above 1000, returns 400.
@@ -108,7 +108,7 @@ Status codes used everywhere: 200 for a read or an update that returns data, 201
 
 ## Reports and customers
 
-34. An admin can read the sales summary of their store for today: the sum of totals of orders placed today that are not cancelled, and the count of those orders.
+34. An admin can read the sales summary of their store for today: the sum of totals of orders placed today that are not cancelled, the tax collected within that sum, and the count of those orders. The takings include the tax, so the tax is shown beside them rather than hidden inside one number.
 35. An admin can read the list of customers of their store (id, full name, email, registered date), never the password hash.
 
 ## Notifications
@@ -146,3 +146,17 @@ Status codes used everywhere: 200 for a read or an update that returns data, 201
 55. Secrets (connection strings, the JWT secret, seed passwords) are never in the code or in committed files; locally they come from user-secrets, in Docker from environment variables, and when deployed from Azure Key Vault if `KeyVault:Url` is configured.
 56. The whole system starts with `docker compose up`: the database, RabbitMQ, the two APIs, the gateway, and the web app.
 57. Product images are a URL field only; there is no upload.
+
+## Tax and discount
+
+58. A store has a tax rate, written as a percentage, which starts at zero so a shop that charges no tax needs no setting up. Any logged-in user can read the tax rate of their own store, because the checkout screen has to show what the tax will be before the sale is made. Only an admin can change it, and only for their own store.
+    - a. A tax rate below zero or above 100 returns 400.
+    - b. A cashier or a customer changing a tax rate returns 403.
+    - c. Reading or changing the tax rate of another store is not possible, because the store comes from the token.
+59. A cashier or an admin can give a whole order a discount, written as a percentage of the subtotal, when the order is placed; the discount is optional and no discount means none was given, which is a different fact from a discount of zero per cent.
+    - a. A discount percentage below zero or above 100 returns 400.
+    - b. A customer sending a discount returns 403, checked before the order is priced, so the answer is about permission and not about stock.
+60. An order's money is worked out in one fixed order: every line is priced from the copied unit price, the lines are added up into the subtotal, the discount is taken off the subtotal, the tax is worked out on what is left, and the total is what the customer pays. The discount and the tax are each rounded to two decimal places with halves going away from zero; nothing else is rounded, because every other step is an exact sum or difference of amounts that already have two decimal places.
+61. The order stores its own subtotal, discount percentage, discount amount, tax percentage, tax amount, and total, copied at the time of the sale in the same way as the product name and unit price, so changing a store's tax rate later never changes an old receipt or an old day's takings.
+62. Every check and every figure that used to mean the order's total now means the total the customer pays: the amount tendered must cover it, the change due is worked out from it, the receipt shows the subtotal, the discount, and the tax above it, and the order-placed notification names it.
+    - a. A discount that brings the total to zero is allowed; a cash sale still needs an amount tendered, and the whole of it is handed back as change.
