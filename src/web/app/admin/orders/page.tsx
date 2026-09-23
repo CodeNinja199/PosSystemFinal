@@ -1,21 +1,61 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { callPosApi } from "@/lib/callPosApi";
-import { requireLoginToken } from "@/lib/requireLoginToken";
-import { requireRole } from "@/lib/requireRole";
+import { readFromApi } from "@/lib/callWebApi";
+import { useRequireLogin } from "@/lib/useRequireLogin";
 import type { OrderResponse } from "@/lib/types/OrderResponse";
 import { OrderStatusButtons } from "@/app/components/OrderStatusButtons";
 
 // The store's orders for cashiers and admins. The API answers 403 to anyone else even if they reach the page.
-export default async function StoreOrdersPage() {
-  const token = await requireLoginToken();
-  await requireRole(["Cashier", "Admin"]);
+//
+// A client component because the token lives in localStorage, which only the browser can read.
+export default function StoreOrdersPage() {
+  const { isReady } = useRequireLogin(["Cashier", "Admin"]);
+  const [orders, setOrders] = useState<OrderResponse[] | null>(null);
+  const [errorMessage, setErrorMessage] = useState("");
 
-  const ordersResponse = await callPosApi("/pos/orders", {
-    method: "GET",
-    token: token,
-    body: null,
-  });
-  const orders: OrderResponse[] = await ordersResponse.json();
+  // Counted up by handleStatusChanged below. A completed or cancelled order used to be shown by
+  // asking Next to render the page on the server again; the fetch now happens here in the browser,
+  // so a change has to ask for that fetch to run again instead.
+  const [reloadCount, setReloadCount] = useState(0);
+
+  useEffect(
+    function loadOrders() {
+      if (isReady === false) {
+        return;
+      }
+
+      readFromApi<OrderResponse[]>("/pos/orders")
+        .then(function showThem(loadedOrders) {
+          setOrders(loadedOrders);
+        })
+        .catch(function showTheProblem() {
+          setErrorMessage("The orders could not be loaded.");
+        });
+    },
+    [isReady, reloadCount],
+  );
+
+  function handleStatusChanged() {
+    setReloadCount(function countOneMore(currentCount) {
+      return currentCount + 1;
+    });
+  }
+
+  // Nothing of this page is drawn once the stored login has gone: the redirect from useRequireLogin
+  // is already on its way, and what was fetched belonged to whoever was signed in a moment ago.
+  if (isReady === false) {
+    return <p>Loading…</p>;
+  }
+
+  if (errorMessage !== "") {
+    return <p className="text-red-700">{errorMessage}</p>;
+  }
+
+  if (orders === null) {
+    return <p>Loading…</p>;
+  }
 
   const rowElements: React.ReactElement[] = [];
   for (const order of orders) {
@@ -35,7 +75,11 @@ export default async function StoreOrdersPage() {
         <td className="py-2">{order.paymentMethod}</td>
         <td className="py-2">Rs {order.total}</td>
         <td className="py-2">
-          <OrderStatusButtons orderId={order.id} status={order.status} />
+          <OrderStatusButtons
+            orderId={order.id}
+            status={order.status}
+            onStatusChanged={handleStatusChanged}
+          />
         </td>
       </tr>,
     );

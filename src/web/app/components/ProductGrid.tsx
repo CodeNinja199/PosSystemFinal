@@ -10,7 +10,8 @@ type ProductGridProps = {
   categories: CategoryResponse[];
 };
 
-// The interactive part of the products page: a category list, a search box, and the cards that match both. Fed by props from the server page.
+// The interactive part of the products page: a category list, a search box, and the cards that match
+// both. Fed by props from the page, which now fetches them in the browser.
 export function ProductGrid(props: ProductGridProps) {
   const products = props.products;
   const categories = props.categories;

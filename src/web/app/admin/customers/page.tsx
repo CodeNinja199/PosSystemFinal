@@ -1,18 +1,46 @@
-import { callPosApi } from "@/lib/callPosApi";
-import { requireLoginToken } from "@/lib/requireLoginToken";
-import { requireRole } from "@/lib/requireRole";
+"use client";
+
+import { useEffect, useState } from "react";
+import { readFromApi } from "@/lib/callWebApi";
+import { useRequireLogin } from "@/lib/useRequireLogin";
 import type { UserResponse } from "@/lib/types/UserResponse";
 
-export default async function AdminCustomersPage() {
-  const token = await requireLoginToken();
-  await requireRole(["Admin"]);
+// A client component because the token lives in localStorage, which only the browser can read.
+export default function AdminCustomersPage() {
+  const { isReady } = useRequireLogin(["Admin"]);
+  const [customers, setCustomers] = useState<UserResponse[] | null>(null);
+  const [errorMessage, setErrorMessage] = useState("");
 
-  const customersResponse = await callPosApi("/pos/customers", {
-    method: "GET",
-    token: token,
-    body: null,
-  });
-  const customers: UserResponse[] = await customersResponse.json();
+  useEffect(
+    function loadCustomers() {
+      if (isReady === false) {
+        return;
+      }
+
+      readFromApi<UserResponse[]>("/pos/customers")
+        .then(function showThem(loadedCustomers) {
+          setCustomers(loadedCustomers);
+        })
+        .catch(function showTheProblem() {
+          setErrorMessage("The customers could not be loaded.");
+        });
+    },
+    [isReady],
+  );
+
+  // Nothing of this page is drawn once the stored login has gone: the redirect from useRequireLogin
+  // is already on its way, and what was fetched belonged to whoever was signed in a moment ago.
+  if (isReady === false) {
+    return <p>Loading…</p>;
+  }
+
+  if (errorMessage !== "") {
+    return <p className="text-red-700">{errorMessage}</p>;
+  }
+
+  if (customers === null) {
+    return <p>Loading…</p>;
+  }
 
   const rowElements: React.ReactElement[] = [];
   for (const customer of customers) {

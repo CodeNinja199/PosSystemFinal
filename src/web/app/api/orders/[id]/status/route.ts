@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { callPosApi } from "@/lib/callPosApi";
-import { readLoginTokenFromCookies } from "@/lib/readLoginTokenFromCookies";
+import { readBearerToken } from "@/lib/readBearerToken";
 import type { ApiErrorResponse } from "@/lib/types/ApiErrorResponse";
 import type { OrderResponse } from "@/lib/types/OrderResponse";
 import type { UpdateOrderStatusRequest } from "@/lib/types/UpdateOrderStatusRequest";
@@ -10,7 +10,7 @@ export async function PATCH(
   request: Request,
   context: RouteContext<"/api/orders/[id]/status">,
 ) {
-  const token = await readLoginTokenFromCookies();
+  const token = readBearerToken(request);
   if (token === null) {
     return NextResponse.json(
       { message: "Please log in first." },

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { callWebApi } from "@/lib/callWebApi";
 import type { AdjustStockFormData } from "@/lib/types/AdjustStockFormData";
 import type { ApiErrorResponse } from "@/lib/types/ApiErrorResponse";
 import type { CategoryResponse } from "@/lib/types/CategoryResponse";
@@ -11,13 +11,16 @@ import type { ProductResponse } from "@/lib/types/ProductResponse";
 type ProductTableProps = {
   products: ProductResponse[];
   categories: CategoryResponse[];
+  // Called after a stock adjustment or a delete, so the page can fetch the products again. It used
+  // to be router.refresh(), which only re-ran the fetch while the page was rendered on the server.
+  onProductChanged: () => void;
 };
 
 // The admin's product table: a stock form and a delete button per row, an Edit link to the edit page, one error line.
 export function ProductTable(props: ProductTableProps) {
   const products = props.products;
   const categories = props.categories;
-  const router = useRouter();
+  const onProductChanged = props.onProductChanged;
   const [errorMessage, setErrorMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -29,16 +32,10 @@ export function ProductTable(props: ProductTableProps) {
     setErrorMessage("");
     setIsSubmitting(true);
 
-    let bodyText: string | undefined = undefined;
-    if (body !== null) {
-      bodyText = JSON.stringify(body);
-    }
-
     try {
-      const response = await fetch(path, {
+      const response = await callWebApi(path, {
         method: method,
-        headers: { "Content-Type": "application/json" },
-        body: bodyText,
+        body: body,
       });
 
       if (response.ok === false) {
@@ -49,7 +46,7 @@ export function ProductTable(props: ProductTableProps) {
       }
 
       setIsSubmitting(false);
-      router.refresh();
+      onProductChanged();
     } catch {
       setErrorMessage("The server could not be reached.");
       setIsSubmitting(false);

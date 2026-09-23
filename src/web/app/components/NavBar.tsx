@@ -1,14 +1,53 @@
+"use client";
+
+import { useSyncExternalStore } from "react";
 import Link from "next/link";
-import { readCurrentUserFromCookies } from "@/lib/readCurrentUserFromCookies";
+import { useRouter } from "next/navigation";
+import { useDispatch } from "react-redux";
+import { clearCart } from "@/lib/cartSlice";
+import type { AppDispatch } from "@/lib/store";
+import {
+  clearLoginSession,
+  parseCurrentUser,
+  readNothingWhilePrerendering,
+  readStoredCurrentUserText,
+  subscribeToLoginSession,
+} from "@/lib/loginTokenStorage";
 
 type NavLink = {
   href: string;
   text: string;
 };
 
-// Each role gets only the links it uses. The UI hides what a role cannot use; the API refuses the call anyway if the cookie is edited.
-export async function NavBar() {
-  const currentUser = await readCurrentUserFromCookies();
+// Each role gets only the links it uses. The UI hides what a role cannot use; the API refuses the call anyway.
+//
+// This is a client component because the signed-in user now lives in localStorage, which only the browser can
+// read. The bar therefore draws the logged-out links first and the role's links a moment later, once the
+// browser has taken the page over.
+export function NavBar() {
+  const router = useRouter();
+  const dispatch = useDispatch<AppDispatch>();
+
+  // Reads localStorage and then listens for changes to it, so logging in or out - here or in
+  // another tab - updates the bar without a full page load.
+  const storedUserText = useSyncExternalStore(
+    subscribeToLoginSession,
+    readStoredCurrentUserText,
+    readNothingWhilePrerendering,
+  );
+  const currentUser = parseCurrentUser(storedUserText);
+
+  function handleLogOutButtonClick() {
+    // Clearing the stored login is the whole of logging out now that there is no cookie for the
+    // server to expire. It announces the change, which is what empties this bar.
+    clearLoginSession();
+
+    // Logging out used to be a form post that reloaded the document, and the cart went with the rest
+    // of the page. A client-side navigation keeps the store alive, so the cart is emptied by hand: on
+    // a shared till the next cashier must not inherit the last one's lines.
+    dispatch(clearCart());
+    router.push("/login");
+  }
 
   const links: NavLink[] = [];
   if (currentUser === null) {
@@ -37,19 +76,16 @@ export async function NavBar() {
   let userArea = null;
   if (currentUser !== null) {
     userArea = (
-      <form
-        action="/api/logout"
-        method="post"
-        className="flex items-center gap-3"
-      >
+      <div className="flex items-center gap-3">
         <span>{currentUser.fullName}</span>
         <button
-          type="submit"
+          type="button"
+          onClick={handleLogOutButtonClick}
           className="border border-gray-400 px-3 py-1 hover:bg-gray-100"
         >
           Log out
         </button>
-      </form>
+      </div>
     );
   }
 

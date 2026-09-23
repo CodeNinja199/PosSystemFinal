@@ -1,20 +1,23 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { callWebApi } from "@/lib/callWebApi";
 import type { ApiErrorResponse } from "@/lib/types/ApiErrorResponse";
 import type { UpdateOrderStatusRequest } from "@/lib/types/UpdateOrderStatusRequest";
 
 type OrderStatusButtonsProps = {
   orderId: number;
   status: string;
+  // Called once the API has changed the status, so the page can fetch the orders again. It used to
+  // be router.refresh(), which only re-ran the fetch while the page was rendered on the server.
+  onStatusChanged: () => void;
 };
 
 // Two buttons per Placed order on the store orders page. A finished order shows no buttons: nothing can change it.
 export function OrderStatusButtons(props: OrderStatusButtonsProps) {
   const orderId = props.orderId;
   const status = props.status;
-  const router = useRouter();
+  const onStatusChanged = props.onStatusChanged;
   const [errorMessage, setErrorMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -27,10 +30,9 @@ export function OrderStatusButtons(props: OrderStatusButtonsProps) {
     };
 
     try {
-      const response = await fetch(`/api/orders/${orderId}/status`, {
+      const response = await callWebApi(`/api/orders/${orderId}/status`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(updateOrderStatusRequest),
+        body: updateOrderStatusRequest,
       });
 
       if (response.ok === false) {
@@ -40,7 +42,7 @@ export function OrderStatusButtons(props: OrderStatusButtonsProps) {
         return;
       }
 
-      router.refresh();
+      onStatusChanged();
     } catch {
       setErrorMessage("The server could not be reached.");
       setIsSubmitting(false);

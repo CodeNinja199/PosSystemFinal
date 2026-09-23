@@ -1,41 +1,83 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import Image from "next/image";
-import { notFound } from "next/navigation";
-import { callPosApi } from "@/lib/callPosApi";
-import { requireLoginToken } from "@/lib/requireLoginToken";
+import { useParams } from "next/navigation";
+import { callWebApi, readFromApi } from "@/lib/callWebApi";
+import { useRequireLogin } from "@/lib/useRequireLogin";
 import type { CategoryResponse } from "@/lib/types/CategoryResponse";
 import type { ProductResponse } from "@/lib/types/ProductResponse";
 import { AddToCartButton } from "@/app/components/AddToCartButton";
 
-// The id comes from the folder name [id]; in Next.js 16 params is a promise, so it is awaited.
-export default async function ProductDetailPage(
-  props: PageProps<"/products/[id]">,
-) {
-  const token = await requireLoginToken();
+// A client component because the token lives in localStorage, which only the browser can read.
+// That is also why the id from the folder name [id] comes from useParams: a client component is
+// not handed the route's params, and there is no promise to await.
+//
+// notFound() is a server-side call, so a product the store does not have is reported with a
+// message of its own instead. It still has to be told apart from a request that simply failed,
+// and only the raw response carries the status, so the product is read with callWebApi while
+// the categories go through readFromApi.
+export default function ProductDetailPage() {
+  const { isReady } = useRequireLogin(null);
+  const routeParameters = useParams<{ id: string }>();
+  const productId = routeParameters.id;
+  const [product, setProduct] = useState<ProductResponse | null>(null);
+  const [categories, setCategories] = useState<CategoryResponse[] | null>(null);
+  const [errorMessage, setErrorMessage] = useState("");
 
-  const parameters = await props.params;
-  const productId = parameters.id;
+  // The two fetches do not depend on each other, so they run at the same time and the page waits for both.
+  useEffect(
+    function loadTheProductAndCategories() {
+      if (isReady === false) {
+        return;
+      }
 
-  const productPromise = callPosApi(`/pos/products/${productId}`, {
-    method: "GET",
-    token: token,
-    body: null,
-  });
-  const categoriesPromise = callPosApi("/pos/categories", {
-    method: "GET",
-    token: token,
-    body: null,
-  });
-  const [productResponse, categoriesResponse] = await Promise.all([
-    productPromise,
-    categoriesPromise,
-  ]);
+      async function loadThem() {
+        const [productResponse, loadedCategories] = await Promise.all([
+          callWebApi(`/api/gateway/pos/products/${productId}`, {
+            method: "GET",
+            body: null,
+          }),
+          readFromApi<CategoryResponse[]>("/pos/categories"),
+        ]);
 
-  if (productResponse.status === 404) {
-    notFound();
+        const wasNotFound = productResponse.status === 404;
+        if (wasNotFound) {
+          setErrorMessage("That product could not be found.");
+          return;
+        }
+
+        if (productResponse.ok === false) {
+          throw new Error(
+            `GET /pos/products/${productId} answered ${productResponse.status}`,
+          );
+        }
+
+        const loadedProduct: ProductResponse = await productResponse.json();
+        setProduct(loadedProduct);
+        setCategories(loadedCategories);
+      }
+
+      loadThem().catch(function showTheProblem() {
+        setErrorMessage("The product could not be loaded.");
+      });
+    },
+    [isReady, productId],
+  );
+
+  // Nothing of this page is drawn once the stored login has gone: the redirect from useRequireLogin
+  // is already on its way, and what was fetched belonged to whoever was signed in a moment ago.
+  if (isReady === false) {
+    return <p>Loading…</p>;
   }
 
-  const product: ProductResponse = await productResponse.json();
-  const categories: CategoryResponse[] = await categoriesResponse.json();
+  if (errorMessage !== "") {
+    return <p className="text-red-700">{errorMessage}</p>;
+  }
+
+  if (product === null || categories === null) {
+    return <p>Loading…</p>;
+  }
 
   let categoryName = "";
   for (const category of categories) {

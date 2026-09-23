@@ -1,25 +1,66 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { redirect } from "next/navigation";
-import { callPosApi } from "@/lib/callPosApi";
-import { readCurrentUserFromCookies } from "@/lib/readCurrentUserFromCookies";
-import { requireLoginToken } from "@/lib/requireLoginToken";
+import { useRouter } from "next/navigation";
+import { readFromApi } from "@/lib/callWebApi";
+import { useRequireLogin } from "@/lib/useRequireLogin";
 import type { OrderResponse } from "@/lib/types/OrderResponse";
 
-export default async function MyOrdersPage() {
-  const token = await requireLoginToken();
+// A client component because the token lives in localStorage, which only the browser can read.
+// The staff redirect therefore happens in an effect as well, once the stored user is known, rather
+// than on the server before anything renders.
+export default function MyOrdersPage() {
+  const router = useRouter();
+  const { isReady, currentUser } = useRequireLogin(null);
+  const [orders, setOrders] = useState<OrderResponse[] | null>(null);
+  const [errorMessage, setErrorMessage] = useState("");
 
   // Staff have no orders of their own: the sales they ring up are in the store's orders.
-  const currentUser = await readCurrentUserFromCookies();
-  if (currentUser !== null && currentUser.role !== "Customer") {
-    redirect("/admin/orders");
+  const isStaff = currentUser !== null && currentUser.role !== "Customer";
+
+  useEffect(
+    function sendStaffToTheStoreOrders() {
+      if (isStaff === false) {
+        return;
+      }
+
+      router.replace("/admin/orders");
+    },
+    [isStaff, router],
+  );
+
+  useEffect(
+    function loadMyOrders() {
+      // Nothing is fetched for staff: they are on their way to the store's orders instead.
+      if (isReady === false || isStaff) {
+        return;
+      }
+
+      readFromApi<OrderResponse[]>("/pos/orders/mine")
+        .then(function showThem(loadedOrders) {
+          setOrders(loadedOrders);
+        })
+        .catch(function showTheProblem() {
+          setErrorMessage("Your orders could not be loaded.");
+        });
+    },
+    [isReady, isStaff],
+  );
+
+  // Nothing of this page is drawn once the stored login has gone: the redirect from useRequireLogin
+  // is already on its way, and what was fetched belonged to whoever was signed in a moment ago.
+  if (isReady === false) {
+    return <p>Loading…</p>;
   }
 
-  const ordersResponse = await callPosApi("/pos/orders/mine", {
-    method: "GET",
-    token: token,
-    body: null,
-  });
-  const orders: OrderResponse[] = await ordersResponse.json();
+  if (errorMessage !== "") {
+    return <p className="text-red-700">{errorMessage}</p>;
+  }
+
+  if (orders === null) {
+    return <p>Loading…</p>;
+  }
 
   const rowElements: React.ReactElement[] = [];
   for (const order of orders) {

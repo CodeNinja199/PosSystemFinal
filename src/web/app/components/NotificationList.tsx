@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { callWebApi } from "@/lib/callWebApi";
 import type { ApiErrorResponse } from "@/lib/types/ApiErrorResponse";
 import type { NotificationResponse } from "@/lib/types/NotificationResponse";
 
@@ -10,7 +11,7 @@ type NotificationListProps = {
 
 const ReloadIntervalInMilliseconds = 30000;
 
-// Shows the list the server rendered, then reloads it every 30 seconds. The interval is cleared when the page is left.
+// Shows the list the page fetched, then reloads it every 30 seconds. The interval is cleared when the page is left.
 export function NotificationList(props: NotificationListProps) {
   const [notifications, setNotifications] = useState(
     props.initialNotifications,
@@ -21,7 +22,10 @@ export function NotificationList(props: NotificationListProps) {
 
   async function loadNotifications() {
     try {
-      const response = await fetch("/api/notifications", { method: "GET" });
+      const response = await callWebApi("/api/notifications", {
+        method: "GET",
+        body: null,
+      });
       if (response.ok === false) {
         const errorBody: ApiErrorResponse = await response.json();
         setErrorMessage(errorBody.message);
@@ -53,9 +57,9 @@ export function NotificationList(props: NotificationListProps) {
     setIsSubmitting(true);
 
     try {
-      const response = await fetch(
+      const response = await callWebApi(
         `/api/notifications/${notificationId}/read`,
-        { method: "PATCH" },
+        { method: "PATCH", body: null },
       );
       if (response.ok === false) {
         const errorBody: ApiErrorResponse = await response.json();

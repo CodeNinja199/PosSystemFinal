@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useDispatch, useSelector } from "react-redux";
+import { callWebApi } from "@/lib/callWebApi";
 import { clearCart } from "@/lib/cartSlice";
 import { selectCartItems } from "@/lib/selectCartItems";
 import type { AppDispatch } from "@/lib/store";
@@ -80,10 +81,9 @@ export function CheckoutForm(props: CheckoutFormProps) {
     };
 
     try {
-      const response = await fetch("/api/checkout", {
+      const response = await callWebApi("/api/checkout", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(placeOrderRequest),
+        body: placeOrderRequest,
       });
 
       if (response.ok === false) {

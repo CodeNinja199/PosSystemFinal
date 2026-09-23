@@ -1,30 +1,54 @@
-import { callPosApi } from "@/lib/callPosApi";
-import { requireLoginToken } from "@/lib/requireLoginToken";
+"use client";
+
+import { useEffect, useState } from "react";
+import { readFromApi } from "@/lib/callWebApi";
+import { useRequireLogin } from "@/lib/useRequireLogin";
 import type { CategoryResponse } from "@/lib/types/CategoryResponse";
 import type { ProductResponse } from "@/lib/types/ProductResponse";
 import { ProductGrid } from "@/app/components/ProductGrid";
 
+// A client component because the token lives in localStorage, which only the browser can read.
 // The two fetches do not depend on each other, so they run at the same time and the page waits for both.
-export default async function ProductsPage() {
-  const token = await requireLoginToken();
+export default function ProductsPage() {
+  const { isReady } = useRequireLogin(null);
+  const [products, setProducts] = useState<ProductResponse[] | null>(null);
+  const [categories, setCategories] = useState<CategoryResponse[] | null>(null);
+  const [errorMessage, setErrorMessage] = useState("");
 
-  const categoriesPromise = callPosApi("/pos/categories", {
-    method: "GET",
-    token: token,
-    body: null,
-  });
-  const productsPromise = callPosApi("/pos/products", {
-    method: "GET",
-    token: token,
-    body: null,
-  });
-  const [categoriesResponse, productsResponse] = await Promise.all([
-    categoriesPromise,
-    productsPromise,
-  ]);
+  useEffect(
+    function loadProductsAndCategories() {
+      if (isReady === false) {
+        return;
+      }
 
-  const categories: CategoryResponse[] = await categoriesResponse.json();
-  const products: ProductResponse[] = await productsResponse.json();
+      Promise.all([
+        readFromApi<CategoryResponse[]>("/pos/categories"),
+        readFromApi<ProductResponse[]>("/pos/products"),
+      ])
+        .then(function showThem([loadedCategories, loadedProducts]) {
+          setCategories(loadedCategories);
+          setProducts(loadedProducts);
+        })
+        .catch(function showTheProblem() {
+          setErrorMessage("The products could not be loaded.");
+        });
+    },
+    [isReady],
+  );
+
+  // Nothing of this page is drawn once the stored login has gone: the redirect from useRequireLogin
+  // is already on its way, and what was fetched belonged to whoever was signed in a moment ago.
+  if (isReady === false) {
+    return <p>Loading…</p>;
+  }
+
+  if (errorMessage !== "") {
+    return <p className="text-red-700">{errorMessage}</p>;
+  }
+
+  if (products === null || categories === null) {
+    return <p>Loading…</p>;
+  }
 
   return (
     <div>

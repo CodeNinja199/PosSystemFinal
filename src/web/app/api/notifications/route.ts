@@ -1,12 +1,13 @@
 import { NextResponse } from "next/server";
 import { callPosApi } from "@/lib/callPosApi";
-import { readLoginTokenFromCookies } from "@/lib/readLoginTokenFromCookies";
+import { readBearerToken } from "@/lib/readBearerToken";
 import type { ApiErrorResponse } from "@/lib/types/ApiErrorResponse";
 import type { NotificationResponse } from "@/lib/types/NotificationResponse";
 
 // Called by NotificationList every 30 seconds. The gateway forwards /notifications to the Notification API.
-export async function GET() {
-  const token = await readLoginTokenFromCookies();
+// The request is now a parameter because the token arrives in its Authorization header.
+export async function GET(request: Request) {
+  const token = readBearerToken(request);
   if (token === null) {
     return NextResponse.json(
       { message: "Please log in first." },

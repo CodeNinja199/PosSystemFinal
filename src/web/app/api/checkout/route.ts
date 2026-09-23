@@ -1,13 +1,13 @@
 import { NextResponse } from "next/server";
 import { callPosApi } from "@/lib/callPosApi";
-import { readLoginTokenFromCookies } from "@/lib/readLoginTokenFromCookies";
+import { readBearerToken } from "@/lib/readBearerToken";
 import type { ApiErrorResponse } from "@/lib/types/ApiErrorResponse";
 import type { OrderResponse } from "@/lib/types/OrderResponse";
 import type { PlaceOrderRequest } from "@/lib/types/PlaceOrderRequest";
 
-// Called by the checkout form. Adds the token from the cookie and forwards the order to POST api/orders.
+// Called by the checkout form. Adds the token from the Authorization header and forwards the order to POST api/orders.
 export async function POST(request: Request) {
-  const token = await readLoginTokenFromCookies();
+  const token = readBearerToken(request);
   if (token === null) {
     return NextResponse.json(
       { message: "Please log in first." },

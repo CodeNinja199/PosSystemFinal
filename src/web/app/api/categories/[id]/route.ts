@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { callPosApi } from "@/lib/callPosApi";
-import { readLoginTokenFromCookies } from "@/lib/readLoginTokenFromCookies";
+import { readBearerToken } from "@/lib/readBearerToken";
 import type { ApiErrorResponse } from "@/lib/types/ApiErrorResponse";
 import type { CategoryFormData } from "@/lib/types/CategoryFormData";
 import type { CategoryResponse } from "@/lib/types/CategoryResponse";
@@ -10,7 +10,7 @@ export async function PUT(
   request: Request,
   context: RouteContext<"/api/categories/[id]">,
 ) {
-  const token = await readLoginTokenFromCookies();
+  const token = readBearerToken(request);
   if (token === null) {
     return NextResponse.json(
       { message: "Please log in first." },
@@ -44,7 +44,7 @@ export async function DELETE(
   request: Request,
   context: RouteContext<"/api/categories/[id]">,
 ) {
-  const token = await readLoginTokenFromCookies();
+  const token = readBearerToken(request);
   if (token === null) {
     return NextResponse.json(
       { message: "Please log in first." },

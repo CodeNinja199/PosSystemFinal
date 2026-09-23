@@ -1,33 +1,58 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { callPosApi } from "@/lib/callPosApi";
-import { requireLoginToken } from "@/lib/requireLoginToken";
-import { requireRole } from "@/lib/requireRole";
+import { readFromApi } from "@/lib/callWebApi";
+import { useRequireLogin } from "@/lib/useRequireLogin";
 import type { NotificationResponse } from "@/lib/types/NotificationResponse";
 import type { SalesSummaryResponse } from "@/lib/types/SalesSummaryResponse";
 
 // The admin summary: real numbers from the POS API and the unread low-stock notices from the Notification API, fetched together.
-export default async function AdminSummaryPage() {
-  const token = await requireLoginToken();
-  await requireRole(["Admin"]);
+// A client component because the token lives in localStorage, which only the browser can read.
+// The two fetches do not depend on each other, so they run at the same time and the page waits for both.
+export default function AdminSummaryPage() {
+  const { isReady } = useRequireLogin(["Admin"]);
+  const [summary, setSummary] = useState<SalesSummaryResponse | null>(null);
+  const [notifications, setNotifications] = useState<
+    NotificationResponse[] | null
+  >(null);
+  const [errorMessage, setErrorMessage] = useState("");
 
-  const summaryPromise = callPosApi("/pos/reports/sales-summary", {
-    method: "GET",
-    token: token,
-    body: null,
-  });
-  const notificationsPromise = callPosApi("/notifications/notifications", {
-    method: "GET",
-    token: token,
-    body: null,
-  });
-  const [summaryResponse, notificationsResponse] = await Promise.all([
-    summaryPromise,
-    notificationsPromise,
-  ]);
+  useEffect(
+    function loadSummaryAndNotifications() {
+      if (isReady === false) {
+        return;
+      }
 
-  const summary: SalesSummaryResponse = await summaryResponse.json();
-  const notifications: NotificationResponse[] =
-    await notificationsResponse.json();
+      Promise.all([
+        readFromApi<SalesSummaryResponse>("/pos/reports/sales-summary"),
+        readFromApi<NotificationResponse[]>("/notifications/notifications"),
+      ])
+        .then(function showThem([loadedSummary, loadedNotifications]) {
+          setSummary(loadedSummary);
+          setNotifications(loadedNotifications);
+        })
+        .catch(function showTheProblem() {
+          setErrorMessage("The summary could not be loaded.");
+        });
+    },
+    [isReady],
+  );
+
+  // Nothing of this page is drawn once the stored login has gone: the redirect from useRequireLogin
+  // is already on its way, and what was fetched belonged to whoever was signed in a moment ago.
+  if (isReady === false) {
+    return <p>Loading…</p>;
+  }
+
+  if (errorMessage !== "") {
+    return <p className="text-red-700">{errorMessage}</p>;
+  }
+
+  if (summary === null || notifications === null) {
+    return <p>Loading…</p>;
+  }
+
   const dayText = summary.dayStartUtc.slice(0, 10);
 
   const lowStockElements: React.ReactElement[] = [];

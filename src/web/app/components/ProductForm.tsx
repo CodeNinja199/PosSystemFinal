@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { callWebApi } from "@/lib/callWebApi";
 import type { ApiErrorResponse } from "@/lib/types/ApiErrorResponse";
 import type { CategoryResponse } from "@/lib/types/CategoryResponse";
 import type { ProductFormData } from "@/lib/types/ProductFormData";
@@ -10,13 +10,17 @@ import type { ProductResponse } from "@/lib/types/ProductResponse";
 type ProductFormProps = {
   categories: CategoryResponse[];
   product: ProductResponse | null;
+  // What to do once the API has accepted the product. The page that shows this form decides:
+  // the products page reloads its list, the edit page goes back to that list. The form used to
+  // call router.refresh() itself, which only worked while the pages were rendered on the server.
+  onSaved: () => void;
 };
 
 // Used by the admin products page (product is null: POST) and the edit page (product is set: PUT).
 export function ProductForm(props: ProductFormProps) {
   const categories = props.categories;
   const product = props.product;
-  const router = useRouter();
+  const onSaved = props.onSaved;
 
   let initialName = "";
   let initialPrice = "";
@@ -74,10 +78,9 @@ export function ProductForm(props: ProductFormProps) {
     }
 
     try {
-      const response = await fetch(path, {
+      const response = await callWebApi(path, {
         method: method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(productFormData),
+        body: productFormData,
       });
 
       if (response.ok === false) {
@@ -95,12 +98,11 @@ export function ProductForm(props: ProductFormProps) {
         setImageUrl("");
         setCategoryId("");
         setIsSubmitting(false);
-        router.refresh();
+        onSaved();
         return;
       }
 
-      router.push("/admin/products");
-      router.refresh();
+      onSaved();
     } catch {
       setErrorMessage("The server could not be reached.");
       setIsSubmitting(false);

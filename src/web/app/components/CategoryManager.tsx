@@ -1,19 +1,22 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { callWebApi } from "@/lib/callWebApi";
 import type { ApiErrorResponse } from "@/lib/types/ApiErrorResponse";
 import type { CategoryFormData } from "@/lib/types/CategoryFormData";
 import type { CategoryResponse } from "@/lib/types/CategoryResponse";
 
 type CategoryManagerProps = {
   categories: CategoryResponse[];
+  // Called after an add, a rename or a delete, so the page can fetch the categories again. It used
+  // to be router.refresh(), which only re-ran the fetch while the page was rendered on the server.
+  onCategoryChanged: () => void;
 };
 
-// The admin's category table: an add form above, a rename form and a delete button per row. Every change refreshes the server page.
+// The admin's category table: an add form above, a rename form and a delete button per row.
 export function CategoryManager(props: CategoryManagerProps) {
   const categories = props.categories;
-  const router = useRouter();
+  const onCategoryChanged = props.onCategoryChanged;
   const [newCategoryName, setNewCategoryName] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [rowErrorMessage, setRowErrorMessage] = useState("");
@@ -37,16 +40,10 @@ export function CategoryManager(props: CategoryManagerProps) {
       }
     }
 
-    let bodyText: string | undefined = undefined;
-    if (body !== null) {
-      bodyText = JSON.stringify(body);
-    }
-
     try {
-      const response = await fetch(path, {
+      const response = await callWebApi(path, {
         method: method,
-        headers: { "Content-Type": "application/json" },
-        body: bodyText,
+        body: body,
       });
 
       if (response.ok === false) {
@@ -58,7 +55,7 @@ export function CategoryManager(props: CategoryManagerProps) {
 
       setNewCategoryName("");
       setIsSubmitting(false);
-      router.refresh();
+      onCategoryChanged();
     } catch {
       showErrorMessage("The server could not be reached.");
       setIsSubmitting(false);

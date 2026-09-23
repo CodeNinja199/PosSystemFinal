@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { callPosApi } from "@/lib/callPosApi";
-import { readLoginTokenFromCookies } from "@/lib/readLoginTokenFromCookies";
+import { readBearerToken } from "@/lib/readBearerToken";
 import type { AdjustStockFormData } from "@/lib/types/AdjustStockFormData";
 import type { ApiErrorResponse } from "@/lib/types/ApiErrorResponse";
 import type { ProductResponse } from "@/lib/types/ProductResponse";
@@ -10,7 +10,7 @@ export async function PATCH(
   request: Request,
   context: RouteContext<"/api/products/[id]/stock">,
 ) {
-  const token = await readLoginTokenFromCookies();
+  const token = readBearerToken(request);
   if (token === null) {
     return NextResponse.json(
       { message: "Please log in first." },
