@@ -75,7 +75,7 @@ Status codes used everywhere: 200 for a read or an update that returns data, 201
 
 ## Cart and checkout
 
-23. The cart lives in the browser only; it holds product id, name, unit price, and quantity, its subtotal is the sum of unit price times quantity, an item can be removed from it, and it is emptied after an order is placed. The cart shows a subtotal and not a total, because the discount and the tax are worked out by the API when the order is placed.
+23. The cart lives in the browser only; it holds product id, name, unit price, and quantity, its subtotal is the sum of unit price times quantity, an item can be removed from it, and it is emptied after an order is placed, when the user logs out, and whenever anybody logs in, so a session never starts holding the lines of the one before it - which matters on a shared till. The cart shows a subtotal and not a total, because the discount and the tax are worked out by the API when the order is placed.
 24. Any logged-in user can place an order with a list of items (product id and quantity), a payment method of Cash or Card, and, for a cash payment, an optional amount tendered, and receives 201 with the order; a customer's order starts as Placed, and when an amount tendered was given the order also carries the change due, which is the amount tendered minus the total.
     - a. An empty item list returns 400.
     - b. An item quantity of zero or less, or above 1000, returns 400.
@@ -131,8 +131,8 @@ Status codes used everywhere: 200 for a read or an update that returns data, 201
 
 ## Web app
 
-46. The web app renders pages on the server, keeps the token in an httpOnly cookie, deletes both cookies when the user logs out, and never lets the browser call the gateway directly.
-47. A protected page opened without a login redirects to the login page.
+46. The web app keeps the token in the browser's localStorage and sends it as a Bearer header on every call, removes it when the user logs out, when the browser can see that it has expired, and when a call comes back 401, and never lets the browser call the gateway directly: a page reads its data through the web app's own addresses, and the web app is what talks to the gateway. A page that needs the token is therefore rendered in the browser, because the server cannot read localStorage.
+47. A protected page opened without a login redirects to the login page, and so does a page whose login has run out: the stored token carries its own expiry, so the browser sends the user back to log in rather than showing a page that can only fail.
 48. The navigation and the buttons show only what the current role can use, and each role has its own links: a customer sees Products, Cart, My orders, and Notifications; a cashier sees New sale, Cart, and Store orders; an admin sees Summary, Store orders, Manage products, Categories, Customers, and Notifications; after logging in, a customer or cashier lands on the products page and an admin on the summary; the API enforces the same rules regardless.
 49. Customers can register, log in, log out, browse products by category with a search box, open a product, add to the cart, see the cart, remove an item from the cart, check out, see their orders, open a receipt, see their notifications (reloaded every 30 seconds).
 50. Cashiers use the same products page, cart, and checkout as customers to ring up walk-in sales, enter the amount tendered for a cash sale and see the change due on the receipt, and can see the store's orders and mark a customer's placed order completed or cancelled; a cashier has no orders or notifications of their own, so those links are not in the cashier's navigation, and a staff member who opens My orders is sent to Store orders.
@@ -149,6 +149,8 @@ Status codes used everywhere: 200 for a read or an update that returns data, 201
 
 ## Tax and discount
 
+Written before the code, as this document is meant to be, and **not built yet**: nothing in requirements 58 to 62 exists in the API or the web app today. Two clauses elsewhere belong to this section and wait with it - requirement 23's "shows a subtotal and not a total" (both screens still say Total, because there is nothing yet to take off or add on) and requirement 34's tax beside the takings.
+
 58. A store has a tax rate, written as a percentage, which starts at zero so a shop that charges no tax needs no setting up. Any logged-in user can read the tax rate of their own store, because the checkout screen has to show what the tax will be before the sale is made. Only an admin can change it, and only for their own store.
     - a. A tax rate below zero or above 100 returns 400.
     - b. A cashier or a customer changing a tax rate returns 403.
@@ -160,3 +162,10 @@ Status codes used everywhere: 200 for a read or an update that returns data, 201
 61. The order stores its own subtotal, discount percentage, discount amount, tax percentage, tax amount, and total, copied at the time of the sale in the same way as the product name and unit price, so changing a store's tax rate later never changes an old receipt or an old day's takings.
 62. Every check and every figure that used to mean the order's total now means the total the customer pays: the amount tendered must cover it, the change due is worked out from it, the receipt shows the subtotal, the discount, and the tax above it, and the order-placed notification names it.
     - a. A discount that brings the total to zero is allowed; a cash sale still needs an amount tendered, and the whole of it is handed back as change.
+
+## Adding to the cart
+
+63. A product's card and its own page have a quantity picker - minus, the number, plus - beside one Add to cart button, so a shopper adds several of the same product in one go. The number never goes below zero, and never goes above what is left on the shelf once what is already in the cart is counted; adding a product the cart already holds raises that line's quantity instead of making a second line.
+    - a. A product with no stock cannot be added at all.
+    - b. A shopper whose cart already holds the whole shelf is told so, and cannot add more.
+64. Adding to the cart shows a short confirmation naming the product, over the page and not in the button, which disappears on its own after about two seconds and never blocks anything, so a shopper can carry on adding. Adding the same product twice shows the confirmation twice.
