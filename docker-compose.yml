@@ -164,8 +164,8 @@ services:
     restart: unless-stopped
 
   # --------------------------------------------------------------------------
-  # THE WEBSITE. Pages are built on the server, so the browser never talks to
-  # the APIs directly. http://localhost:3000
+  # THE WEBSITE. The browser never talks to the APIs directly: it only ever calls
+  # this container, which forwards to the gateway. http://localhost:3000
   website:
     image: pos-system/website
     container_name: pos-06-website

@@ -62,14 +62,15 @@ The POS API runs fine without RabbitMQ (publishing failures are logged and swall
 
 - `Pos.Api.Tests` boots the real API in memory via `PosApiFactory`, which sets environment variables (they beat user-secrets) pointing at `(localdb)\MSSQLLocalDB;Database=PosDbTest`. It needs SQL Server LocalDB, and it migrates and seeds that database on first run.
 - Test parallelization is disabled assembly-wide (`CollectionBehaviorSettings.cs`) because the classes share that one database.
-- Integration tests log in as the seeded staff (`admin@downtown.local` / `cashier@downtown.local`) with the passwords hard-coded in `PosApiFactory`.
+- Integration tests log in as the seeded staff (`admin@riversidemart.test` / `cashier@riversidemart.test`) with the passwords `PosApiFactory` puts in the environment (`Admin#Test2026`, `Cashier#Test2026`).
+- The two checkout tests stock a product as the admin before they sell it, because that database is seeded once and kept: a test that simply bought the first product would drain the shelf run by run and eventually fail with 409.
 - `Pos.Application.Tests` mocks the repository interfaces with Moq — no database, no broker.
 
 ## Architecture
 
 ### Request path
 
-Browser → Next.js server (`src/web`) → gateway (`:5000`) → POS API or Notification API → SQL Server. The browser never calls the gateway directly: server components call `callPosApi` with the token from the httpOnly cookie, and client components post to route handlers under `src/web/app/api/*` which attach the token server-side. `lib/callPosApi.ts` is the only file that knows `GATEWAY_URL`.
+Browser → Next.js server (`src/web`) → gateway (`:5000`) → POS API or Notification API → SQL Server. The browser never calls the gateway directly: a page calls `callWebApi`/`readFromApi`, which attach the token from localStorage as a Bearer header and call the web app's own route handlers under `src/web/app/api/*`; those read the header with `readBearerToken(request)` and forward the call with `callPosApi`. A page's own reads go through one proxy, `app/api/gateway/[...path]/route.ts` (GET only, prefixes `pos` and `notifications`); the handful of route handlers that existed before it, such as `app/api/notifications/route.ts` for the 30-second poll, still read through `callPosApi` themselves. `lib/callPosApi.ts` is the only file that knows `GATEWAY_URL`.
 
 Ocelot maps `/pos/{everything}` → POS API `/api/{everything}` and `/notifications/{everything}` → Notification API `/api/{everything}`, passing `Authorization` through untouched. `ocelot.json` is used locally, `ocelot.Docker.json` when `ASPNETCORE_ENVIRONMENT=Docker` — one whole file is selected on purpose (`Program.cs`), never merged.
 
@@ -101,7 +102,7 @@ The POS API issues an HS256 JWT (id, email, role, `storeId`; 24 hours). Both API
 
 ### Web app
 
-Next.js App Router, server components by default. Pages call `requireLoginToken()` (redirects to `/login`) and `requireRole([...])` (redirects to the role's home) at the top; this is convenience only, the API enforces roles regardless. Two cookies: `pos_token` (httpOnly, the JWT) and `pos_user` (readable, name and role for the navbar). Redux Toolkit holds only the cart, in the browser, created once per tab by `StoreProvider`. Tailwind v4 for styling. `next.config.ts` uses `output: "standalone"` for the Docker image.
+Next.js App Router. Every page that needs the token is a client component, because the token lives in the browser's localStorage under `pos_token` (the JWT) and `pos_user` (name and role for the navbar) - see `lib/loginTokenStorage.ts`, the only file that touches those keys. Such a page calls `useRequireLogin([...roles])` at the top and renders nothing until `isReady`; that is convenience only, the API enforces roles regardless. `useRequireLogin` and `NavBar` read storage with `useSyncExternalStore`, so logging in or out - in this tab or another - updates them without a reload. `/register` is the one page still rendered on the server (`export const dynamic = "force-dynamic"`, because it fetches the store list). After a write, a component calls the prop the page gave it - `onProductChanged`, `onCategoryChanged`, `onStatusChanged`, or `onSaved` for the product form - and the page fetches again; `router.refresh()` is no use now that the data is fetched in the browser. Redux Toolkit holds only the cart, in the browser, created once per tab by `StoreProvider`. Tailwind v4 for styling. `next.config.ts` uses `output: "standalone"` for the Docker image.
 
 ## Conventions
 
