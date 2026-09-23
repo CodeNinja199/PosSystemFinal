@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { CartToast } from "@/app/components/CartToast";
 import { NavBar } from "@/app/components/NavBar";
 import { StoreProvider } from "@/app/StoreProvider";
 
@@ -18,6 +19,7 @@ export default function RootLayout(props: LayoutProps<"/">) {
         <StoreProvider>
           <NavBar />
           <main className="mx-auto w-full max-w-5xl px-6 py-6">{children}</main>
+          <CartToast />
         </StoreProvider>
       </body>
     </html>
