@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-A multi-store point-of-sale system: two ASP.NET Core (net10.0) APIs behind an Ocelot gateway, a Next.js 16 web app, SQL Server, and RabbitMQ. `docs/REQUIREMENTS.md` is the spec — 57 numbered requirements, each with its unhappy paths and status codes. **Read the relevant requirement before changing behaviour, and add a requirement there before building something new.** The tests are written against those numbered rules.
+A multi-store point-of-sale system: two ASP.NET Core (net10.0) APIs behind an Ocelot gateway, a Next.js 16 web app, SQL Server, and RabbitMQ. `docs/REQUIREMENTS.md` is the spec — 64 numbered requirements, each with its unhappy paths and status codes; 58 to 62 are the tax and discount section, written but not built yet, and the file says so. **Read the relevant requirement before changing behaviour, and add a requirement there before building something new.** The tests are written against those numbered rules.
 
 ## Commands
 
