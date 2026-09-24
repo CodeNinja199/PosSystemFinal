@@ -480,3 +480,6 @@ $RECYCLE.BIN/
 
 # Vim temporary swap files
 *.swp
+
+# Claude Code project notes: kept on this machine only, not in the repository
+CLAUDE.md
