@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { connection } from "next/server";
 import "./globals.css";
 import { CartToast } from "@/app/components/CartToast";
 import { NavBar } from "@/app/components/NavBar";
@@ -10,8 +11,13 @@ export const metadata: Metadata = {
     "Point of sale for the store: products, orders, and notifications.",
 };
 
-export default function RootLayout(props: LayoutProps<"/">) {
+export default async function RootLayout(props: LayoutProps<"/">) {
   const children = props.children;
+
+  // proxy.ts makes a fresh nonce for every request, and a page built once in advance would carry
+  // none, so the browser would refuse all of its scripts. Waiting for the request here makes every
+  // page below this layout render when it is asked for (requirement 65).
+  await connection();
 
   return (
     <html lang="en" className="h-full">
