@@ -169,3 +169,12 @@ Written before the code, as this document is meant to be, and **not built yet**:
     - a. A product with no stock cannot be added at all.
     - b. A shopper whose cart already holds the whole shelf is told so, and cannot add more.
 64. Adding to the cart shows a short confirmation naming the product, over the page and not in the button, which disappears on its own after about two seconds and never blocks anything, so a shopper can carry on adding. Adding the same product twice shows the confirmation twice.
+
+## Content Security Policy
+
+65. Every page is sent with a Content Security Policy that lets the browser run only the app's own scripts, because the login token now lives in localStorage and any script running on the page could read it. Each request gets a fresh random nonce, and the browser runs only scripts that carry it, so a script that reaches the page any other way - through a product name, say - is refused. Stopping such a script from running is the protection; the other rules only narrow what is left. Because the nonce changes on every request, every page is rendered when it is asked for rather than built in advance. The policy also lets the page call only its own address with fetch, lets nothing show it in a frame, and lets pictures come from the app itself or any web address, because a product image is a link to another site.
+    - a. A script written into the page without the nonce - including an inline event handler such as an image's onerror - is not run, and the browser reports a Content Security Policy violation.
+    - b. A script loaded from another site is not run.
+    - c. A fetch from the page to any address other than its own is blocked. This does not stop a script that has already run from sending the token away - in a picture's address, or by moving the page to another site - which is why (a) and (b) are what matter.
+    - d. Product images from any http or https address still load.
+    - e. The policy is sent with every response except the built files under /_next, including the app's 404 page for an unknown address under /api; on the JSON route handlers it is harmless.
