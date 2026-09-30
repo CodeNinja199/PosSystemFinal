@@ -4,11 +4,13 @@ import Link from "next/link";
 import { useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { removeItem } from "@/lib/cartSlice";
+import { formatRupees } from "@/lib/formatRupees";
 import { selectCartItems } from "@/lib/selectCartItems";
 import type { AppDispatch } from "@/lib/store";
 import type { CartItem } from "@/lib/types/CartItem";
 
-// The interactive part of the cart page: reads the cart from the store, removes lines, shows the total.
+// The interactive part of the cart page: reads the cart from the store, removes lines, shows the subtotal. The GST is
+// only added at checkout, where the API works it out (requirement 23).
 export function CartTable() {
   const cartItems = useSelector(selectCartItems);
   const dispatch = useDispatch<AppDispatch>();
@@ -50,7 +52,12 @@ export function CartTable() {
         </thead>
         <tbody>{rowElements}</tbody>
       </table>
-      <p className="text-lg font-bold">Total: Rs {cartTotal}</p>
+      <div>
+        <p className="text-lg font-bold">
+          Subtotal: Rs {formatRupees(cartTotal)}
+        </p>
+        <p className="text-sm text-gray-700">GST is added at checkout.</p>
+      </div>
       <Link href="/checkout" className="w-fit bg-accent px-4 py-2 text-white">
         Go to checkout
       </Link>
@@ -74,9 +81,11 @@ function CartRow(props: CartRowProps) {
   return (
     <tr className="border-b border-gray-200">
       <td className="py-2">{item.productName}</td>
-      <td className="py-2">Rs {item.unitPrice}</td>
+      <td className="py-2">Rs {formatRupees(item.unitPrice)}</td>
       <td className="py-2">{item.quantity}</td>
-      <td className="py-2">Rs {item.unitPrice * item.quantity}</td>
+      <td className="py-2">
+        Rs {formatRupees(item.unitPrice * item.quantity)}
+      </td>
       <td className="py-2">
         <button
           type="button"

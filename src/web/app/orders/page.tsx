@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { readFromApi } from "@/lib/callWebApi";
+import { formatRupees } from "@/lib/formatRupees";
 import { useRequireLogin } from "@/lib/useRequireLogin";
 import type { OrderResponse } from "@/lib/types/OrderResponse";
 
@@ -78,7 +79,7 @@ export default function MyOrdersPage() {
         <td className="py-2">{placedAt.toLocaleString()}</td>
         <td className="py-2">{order.status}</td>
         <td className="py-2">{order.paymentMethod}</td>
-        <td className="py-2">Rs {order.total}</td>
+        <td className="py-2">Rs {formatRupees(order.total)}</td>
       </tr>,
     );
   }

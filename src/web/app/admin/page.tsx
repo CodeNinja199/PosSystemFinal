@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { readFromApi } from "@/lib/callWebApi";
+import { formatRupees } from "@/lib/formatRupees";
 import { useRequireLogin } from "@/lib/useRequireLogin";
 import type { NotificationResponse } from "@/lib/types/NotificationResponse";
 import type { SalesSummaryResponse } from "@/lib/types/SalesSummaryResponse";
@@ -79,7 +80,11 @@ export default function AdminSummaryPage() {
         <tbody>
           <tr className="border-b border-gray-200">
             <td className="py-2">Total sales</td>
-            <td className="py-2">Rs {summary.totalSales}</td>
+            <td className="py-2">Rs {formatRupees(summary.totalSales)}</td>
+          </tr>
+          <tr className="border-b border-gray-200">
+            <td className="py-2">GST collected</td>
+            <td className="py-2">Rs {formatRupees(summary.gstCollected)}</td>
           </tr>
           <tr className="border-b border-gray-200">
             <td className="py-2">Orders placed</td>

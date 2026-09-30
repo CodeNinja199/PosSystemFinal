@@ -2,5 +2,6 @@
 export type SalesSummaryResponse = {
   dayStartUtc: string;
   totalSales: number;
+  gstCollected: number;
   orderCount: number;
 };

@@ -5,20 +5,25 @@ import { useRouter } from "next/navigation";
 import { useDispatch, useSelector } from "react-redux";
 import { callWebApi } from "@/lib/callWebApi";
 import { clearCart } from "@/lib/cartSlice";
+import { formatRupees } from "@/lib/formatRupees";
 import { selectCartItems } from "@/lib/selectCartItems";
 import type { AppDispatch } from "@/lib/store";
 import type { ApiErrorResponse } from "@/lib/types/ApiErrorResponse";
 import type { OrderItemRequest } from "@/lib/types/OrderItemRequest";
 import type { OrderResponse } from "@/lib/types/OrderResponse";
 import type { PlaceOrderRequest } from "@/lib/types/PlaceOrderRequest";
+import { workOutCheckoutAmounts } from "@/lib/workOutCheckoutAmounts";
 
 type CheckoutFormProps = {
   isWalkInSale: boolean;
+  gstPercentage: number;
 };
 
-// Reads the cart from the store, asks for the payment method and, at the counter, the cash handed over, posts to app/api/checkout, and empties the cart on success.
+// Reads the cart from the store, shows the subtotal, the GST, and the total before the sale is made (requirement 62), asks
+// for the payment method and, at the counter, the cash handed over, posts to app/api/checkout, and empties the cart on success.
 export function CheckoutForm(props: CheckoutFormProps) {
   const isWalkInSale = props.isWalkInSale;
+  const gstPercentage = props.gstPercentage;
   const cartItems = useSelector(selectCartItems);
   const dispatch = useDispatch<AppDispatch>();
   const router = useRouter();
@@ -27,16 +32,11 @@ export function CheckoutForm(props: CheckoutFormProps) {
   const [errorMessage, setErrorMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const cartTotal = useMemo(
-    function addUpCartTotal() {
-      let total = 0;
-      for (const item of cartItems) {
-        total = total + item.unitPrice * item.quantity;
-      }
-
-      return total;
+  const amounts = useMemo(
+    function workOutAmounts() {
+      return workOutCheckoutAmounts(cartItems, gstPercentage);
     },
-    [cartItems],
+    [cartItems, gstPercentage],
   );
 
   const isCashAtTheCounter = isWalkInSale && paymentMethod === "Cash";
@@ -52,9 +52,12 @@ export function CheckoutForm(props: CheckoutFormProps) {
         return null;
       }
 
-      return amountTendered - cartTotal;
+      // The change comes from the total with the GST on it, counted in whole paisa like the total itself.
+      const amountTenderedInPaisa = Math.round(amountTendered * 100);
+      const totalInPaisa = Math.round(amounts.total * 100);
+      return (amountTenderedInPaisa - totalInPaisa) / 100;
     },
-    [amountTenderedText, cartTotal],
+    [amountTenderedText, amounts.total],
   );
 
   async function handleCheckoutFormSubmit(
@@ -123,7 +126,7 @@ export function CheckoutForm(props: CheckoutFormProps) {
     lineElements.push(
       <li key={item.productId}>
         {item.quantity} x {item.productName} = Rs{" "}
-        {item.unitPrice * item.quantity}
+        {formatRupees(item.unitPrice * item.quantity)}
       </li>,
     );
   }
@@ -144,11 +147,13 @@ export function CheckoutForm(props: CheckoutFormProps) {
     let changeElement = null;
     if (changeDue !== null) {
       if (changeDue >= 0) {
-        changeElement = <p className="font-bold">Change due: Rs {changeDue}</p>;
+        changeElement = (
+          <p className="font-bold">Change due: Rs {formatRupees(changeDue)}</p>
+        );
       } else {
         changeElement = (
           <p className="text-red-700">
-            That is Rs {Math.abs(changeDue)} short of the total.
+            That is Rs {formatRupees(Math.abs(changeDue))} short of the total.
           </p>
         );
       }
@@ -183,7 +188,13 @@ export function CheckoutForm(props: CheckoutFormProps) {
       className="flex max-w-md flex-col gap-4"
     >
       <ul className="list-disc pl-5">{lineElements}</ul>
-      <p className="font-bold">Total: Rs {cartTotal}</p>
+      <div className="flex flex-col gap-1">
+        <p>Subtotal: Rs {formatRupees(amounts.subtotal)}</p>
+        <p>
+          GST ({gstPercentage}%): Rs {formatRupees(amounts.gst)}
+        </p>
+        <p className="font-bold">Total: Rs {formatRupees(amounts.total)}</p>
+      </div>
       <fieldset className="flex flex-col gap-1">
         <legend className="mb-1">Payment method</legend>
         <label htmlFor="cash">

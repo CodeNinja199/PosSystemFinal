@@ -7,6 +7,9 @@ export type OrderResponse = {
   placedAt: string;
   status: string;
   paymentMethod: string;
+  subtotal: number;
+  gstPercentage: number;
+  gstAmount: number;
   total: number;
   amountTendered: number | null;
   changeDue: number | null;

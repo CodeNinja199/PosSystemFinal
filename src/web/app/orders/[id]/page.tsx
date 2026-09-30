@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { callWebApi } from "@/lib/callWebApi";
+import { formatRupees } from "@/lib/formatRupees";
 import { useRequireLogin } from "@/lib/useRequireLogin";
 import type { OrderResponse } from "@/lib/types/OrderResponse";
 
@@ -80,8 +81,8 @@ export default function OrderReceiptPage() {
       <tr key={item.productId} className="border-b border-gray-200">
         <td className="py-2">{item.productName}</td>
         <td className="py-2">{item.quantity}</td>
-        <td className="py-2">Rs {item.unitPrice}</td>
-        <td className="py-2">Rs {item.lineTotal}</td>
+        <td className="py-2">Rs {formatRupees(item.unitPrice)}</td>
+        <td className="py-2">Rs {formatRupees(item.lineTotal)}</td>
       </tr>,
     );
   }
@@ -90,9 +91,22 @@ export default function OrderReceiptPage() {
   if (order.amountTendered !== null && order.changeDue !== null) {
     cashElements = (
       <div>
-        <p>Amount tendered: Rs {order.amountTendered}</p>
-        <p>Change: Rs {order.changeDue}</p>
+        <p>Amount tendered: Rs {formatRupees(order.amountTendered)}</p>
+        <p>Change: Rs {formatRupees(order.changeDue)}</p>
       </div>
+    );
+  }
+
+  // An order placed before GST existed carries none (requirement 61), so its receipt stays exactly as it was printed.
+  let gstElements = null;
+  if (order.gstPercentage > 0) {
+    gstElements = (
+      <>
+        <p>Subtotal: Rs {formatRupees(order.subtotal)}</p>
+        <p>
+          GST ({order.gstPercentage}%): Rs {formatRupees(order.gstAmount)}
+        </p>
+      </>
     );
   }
 
@@ -114,7 +128,12 @@ export default function OrderReceiptPage() {
         </thead>
         <tbody>{lineElements}</tbody>
       </table>
-      <p className="mt-4 text-lg font-bold">Total: Rs {order.total}</p>
+      <div className="mt-4 flex flex-col gap-1">
+        {gstElements}
+        <p className="text-lg font-bold">
+          Total: Rs {formatRupees(order.total)}
+        </p>
+      </div>
     </div>
   );
 }
