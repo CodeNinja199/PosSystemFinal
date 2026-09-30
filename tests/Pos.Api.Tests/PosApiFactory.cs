@@ -13,5 +13,6 @@ public class PosApiFactory : WebApplicationFactory<Program>
         Environment.SetEnvironmentVariable("Seed__AdminPassword", "Admin#Test2026");
         Environment.SetEnvironmentVariable("Seed__CashierPassword", "Cashier#Test2026");
         Environment.SetEnvironmentVariable("RabbitMq__Host", "localhost");
+        Environment.SetEnvironmentVariable("Tax__GstPercentage", "18");
     }
 }

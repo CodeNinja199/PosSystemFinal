@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using System.Text.Json;
 
 using Pos.Application.Dtos;
 using Pos.Domain.Enums;
@@ -73,13 +74,23 @@ public class CheckoutEndpointTests : IClassFixture<PosApiFactory>
         Assert.Equal(HttpStatusCode.Created, orderResponse.StatusCode);
         OrderResponse? placedOrder = await orderResponse.Content.ReadFromJsonAsync<OrderResponse>();
         Assert.NotNull(placedOrder);
-        Assert.Equal(productToBuy.Price * 2, placedOrder.Total);
+        // Requirement 60: the two lines make the subtotal, and 18% GST rounded to the paisa goes on top of it.
+        decimal expectedSubtotal = productToBuy.Price * 2;
+        decimal expectedGst = Math.Round(expectedSubtotal * 18m / 100m, 2, MidpointRounding.AwayFromZero);
+        Assert.Equal(expectedSubtotal + expectedGst, placedOrder.Total);
 
         HttpResponseMessage receiptResponse = await _client.GetAsync($"/api/orders/{placedOrder.Id}");
         OrderResponse? receipt = await receiptResponse.Content.ReadFromJsonAsync<OrderResponse>();
         Assert.NotNull(receipt);
         Assert.Equal(productToBuy.Name, receipt.Items[0].ProductName);
         Assert.Equal(productToBuy.Price, receipt.Items[0].UnitPrice);
+
+        // Requirement 61: the receipt is read back from the database, so this proves the order row keeps its own figures.
+        HttpResponseMessage receiptJsonResponse = await _client.GetAsync($"/api/orders/{placedOrder.Id}");
+        JsonElement receiptJson = await receiptJsonResponse.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal(expectedSubtotal, receiptJson.GetProperty("subtotal").GetDecimal());
+        Assert.Equal(18m, receiptJson.GetProperty("gstPercentage").GetDecimal());
+        Assert.Equal(expectedGst, receiptJson.GetProperty("gstAmount").GetDecimal());
 
         HttpResponseMessage productAfterResponse = await _client.GetAsync($"/api/products/{productToBuy.Id}");
         ProductResponse? productAfter = await productAfterResponse.Content.ReadFromJsonAsync<ProductResponse>();
@@ -99,13 +110,17 @@ public class CheckoutEndpointTests : IClassFixture<PosApiFactory>
         Assert.NotNull(loginBody);
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", loginBody.Token);
 
+        // Requirement 62: the cash has to cover the total with the GST on it, and the change is worked out from that total.
+        decimal expectedGst = Math.Round(productToSell.Price * 18m / 100m, 2, MidpointRounding.AwayFromZero);
+        decimal expectedTotal = productToSell.Price + expectedGst;
+
         OrderItemRequest orderItemRequest = new OrderItemRequest { ProductId = productToSell.Id, Quantity = 1 };
         List<OrderItemRequest> orderItems = new List<OrderItemRequest> { orderItemRequest };
         PlaceOrderRequest walkInSaleRequest = new PlaceOrderRequest
         {
             Items = orderItems,
             PaymentMethod = PaymentMethod.Cash,
-            AmountTendered = productToSell.Price + 50
+            AmountTendered = expectedTotal + 50
         };
         HttpResponseMessage saleResponse = await _client.PostAsJsonAsync("/api/orders", walkInSaleRequest);
 
@@ -113,12 +128,13 @@ public class CheckoutEndpointTests : IClassFixture<PosApiFactory>
         OrderResponse? sale = await saleResponse.Content.ReadFromJsonAsync<OrderResponse>();
         Assert.NotNull(sale);
         Assert.Equal("Completed", sale.Status);
+        Assert.Equal(expectedTotal, sale.Total);
         Assert.Equal<decimal?>(50m, sale.ChangeDue);
 
         HttpResponseMessage receiptResponse = await _client.GetAsync($"/api/orders/{sale.Id}");
         OrderResponse? receipt = await receiptResponse.Content.ReadFromJsonAsync<OrderResponse>();
         Assert.NotNull(receipt);
-        Assert.Equal<decimal?>(productToSell.Price + 50, receipt.AmountTendered);
+        Assert.Equal<decimal?>(expectedTotal + 50, receipt.AmountTendered);
         Assert.Equal<decimal?>(50m, receipt.ChangeDue);
     }
 }
