@@ -7,6 +7,7 @@ using Pos.Application.Exceptions;
 using Pos.Application.Interfaces;
 using Pos.Application.Messaging;
 using Pos.Application.Services;
+using Pos.Application.Settings;
 using Pos.Domain.Entities;
 using Pos.Domain.Enums;
 
@@ -26,7 +27,8 @@ public class OrderServiceTests
         _productRepository = new Mock<IProductRepository>();
         _notificationMessagePublisher = new Mock<INotificationMessagePublisher>();
         _userRepository = new Mock<IUserRepository>();
-        _orderService = new OrderService(_orderRepository.Object, _productRepository.Object, NullLogger<OrderService>.Instance, _notificationMessagePublisher.Object, _userRepository.Object);
+        TaxService taxService = new TaxService(new TaxSettings { GstPercentage = 18m });
+        _orderService = new OrderService(_orderRepository.Object, _productRepository.Object, NullLogger<OrderService>.Instance, _notificationMessagePublisher.Object, _userRepository.Object, taxService);
     }
 
     private static PlaceOrderRequest BuildRequest(int productId, int quantity)
@@ -101,7 +103,9 @@ public class OrderServiceTests
 
         OrderResponse orderResponse = await _orderService.PlaceOrderAsync(BuildRequest(4, 3), 5, UserRole.Customer, 2);
 
-        Assert.Equal(450, orderResponse.Total);
+        Assert.Equal(450m, orderResponse.Subtotal);
+        Assert.Equal(81m, orderResponse.GstAmount);
+        Assert.Equal(531m, orderResponse.Total);
         Assert.Equal("Placed", orderResponse.Status);
         Assert.Equal("Chocolate bar", orderResponse.Items[0].ProductName);
         Assert.Equal(5, chocolateBar.StockQuantity);
@@ -177,6 +181,11 @@ public class OrderServiceTests
 
         _notificationMessagePublisher.Verify(
             publisher => publisher.PublishAsync(It.Is<NotificationMessage>(message => message.Type == NotificationMessageTypes.OrderPlaced && message.RecipientUserId == 5)),
+            Times.Once());
+
+        // Requirement 62: the message names what the customer pays - Rs 450 of chocolate plus Rs 81 GST - not the subtotal.
+        _notificationMessagePublisher.Verify(
+            publisher => publisher.PublishAsync(It.Is<NotificationMessage>(message => message.Message.EndsWith("Total Rs 531."))),
             Times.Once());
     }
 
@@ -254,13 +263,13 @@ public class OrderServiceTests
             .Setup(repository => repository.GetProductsByIdsAsync(It.IsAny<List<int>>(), 2))
             .ReturnsAsync(new List<Product> { chocolateBar });
         PlaceOrderRequest cashSaleRequest = BuildRequest(4, 3);
-        cashSaleRequest.AmountTendered = 500;
+        cashSaleRequest.AmountTendered = 600;
 
         OrderResponse orderResponse = await _orderService.PlaceOrderAsync(cashSaleRequest, 4, UserRole.Cashier, 2);
 
-        Assert.Equal(450, orderResponse.Total);
-        Assert.Equal<decimal?>(500m, orderResponse.AmountTendered);
-        Assert.Equal<decimal?>(50m, orderResponse.ChangeDue);
+        Assert.Equal(531m, orderResponse.Total);
+        Assert.Equal<decimal?>(600m, orderResponse.AmountTendered);
+        Assert.Equal<decimal?>(69m, orderResponse.ChangeDue);
     }
 
     [Fact]
@@ -298,9 +307,56 @@ public class OrderServiceTests
             await _orderService.PlaceOrderAsync(shortCashRequest, 4, UserRole.Cashier, 2);
         });
 
-        Assert.Equal("Amount tendered Rs 100 is less than the total Rs 450.", exception.Message);
+        Assert.Equal("Amount tendered Rs 100 is less than the total Rs 531.", exception.Message);
         Assert.Equal(80, chocolateBar.StockQuantity);
         _orderRepository.Verify(repository => repository.SaveNewOrderAsync(It.IsAny<Order>()), Times.Never());
+    }
+
+    [Fact]
+    public async Task PlaceOrderAsync_adds_18_percent_gst_on_top_of_the_subtotal()
+    {
+        Product flourBag = new Product { Id = 7, StoreId = 2, Name = "Flour bag", Price = 100, StockQuantity = 20, LowStockThreshold = 5 };
+        _productRepository
+            .Setup(repository => repository.GetProductsByIdsAsync(It.IsAny<List<int>>(), 2))
+            .ReturnsAsync(new List<Product> { flourBag });
+
+        OrderResponse orderResponse = await _orderService.PlaceOrderAsync(BuildRequest(7, 2), 5, UserRole.Customer, 2);
+
+        // Requirement 60's own example: two of a Rs 100 product.
+        Assert.Equal(200m, orderResponse.Subtotal);
+        Assert.Equal(18m, orderResponse.GstPercentage);
+        Assert.Equal(36m, orderResponse.GstAmount);
+        Assert.Equal(236m, orderResponse.Total);
+    }
+
+    [Fact]
+    public async Task PlaceOrderAsync_rounds_the_gst_to_the_paisa_with_halves_going_away_from_zero()
+    {
+        Product matchBox = new Product { Id = 8, StoreId = 2, Name = "Match box", Price = 0.25m, StockQuantity = 20, LowStockThreshold = 5 };
+        _productRepository
+            .Setup(repository => repository.GetProductsByIdsAsync(It.IsAny<List<int>>(), 2))
+            .ReturnsAsync(new List<Product> { matchBox });
+
+        OrderResponse orderResponse = await _orderService.PlaceOrderAsync(BuildRequest(8, 1), 5, UserRole.Customer, 2);
+
+        // 18% of Rs 0.25 is Rs 0.045: away from zero gives Rs 0.05, where banker's rounding would give Rs 0.04.
+        Assert.Equal(0.05m, orderResponse.GstAmount);
+        Assert.Equal(0.30m, orderResponse.Total);
+    }
+
+    [Fact]
+    public async Task PlaceOrderAsync_saves_the_gst_on_the_order_itself_so_a_later_rate_change_cannot_touch_it()
+    {
+        Product flourBag = new Product { Id = 7, StoreId = 2, Name = "Flour bag", Price = 100, StockQuantity = 20, LowStockThreshold = 5 };
+        _productRepository
+            .Setup(repository => repository.GetProductsByIdsAsync(It.IsAny<List<int>>(), 2))
+            .ReturnsAsync(new List<Product> { flourBag });
+
+        await _orderService.PlaceOrderAsync(BuildRequest(7, 2), 5, UserRole.Customer, 2);
+
+        // Requirement 61: the saved row carries its own subtotal, rate, GST, and total.
+        _orderRepository.Verify(repository => repository.SaveNewOrderAsync(It.Is<Order>(order =>
+            order.Subtotal == 200m && order.GstPercentage == 18m && order.GstAmount == 36m && order.Total == 236m)), Times.Once());
     }
 
     [Fact]

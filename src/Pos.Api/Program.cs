@@ -12,6 +12,7 @@ using Pos.Api;
 using Pos.Api.Middleware;
 using Pos.Application.Interfaces;
 using Pos.Application.Services;
+using Pos.Application.Settings;
 using Pos.Infrastructure.Data;
 using Pos.Infrastructure.Messaging;
 using Pos.Infrastructure.Repositories;
@@ -100,7 +101,28 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 
+// One GST rate for every store, from appsettings.json (requirement 58). A missing or impossible rate stops the API
+// at startup rather than letting it charge the wrong tax; a missing key would otherwise quietly read as 0%.
+string? gstPercentageText = builder.Configuration["Tax:GstPercentage"];
+TaxSettings? taxSettings = builder.Configuration.GetSection("Tax").Get<TaxSettings>();
+if (gstPercentageText == null || taxSettings == null)
+{
+    throw new InvalidOperationException("Tax:GstPercentage must be configured between 0 and 100.");
+}
+
+// Each order stores the rate it was charged at in a decimal(5,2) column, so a rate such as 17.125 would be charged
+// in full but saved as 17.13, and the receipt would show a rate that does not match its own GST (requirement 61).
+bool isGstPercentageInRange = taxSettings.GstPercentage >= 0 && taxSettings.GstPercentage <= 100;
+bool hasAtMostTwoDecimalPlaces = decimal.Round(taxSettings.GstPercentage, 2) == taxSettings.GstPercentage;
+if (isGstPercentageInRange == false || hasAtMostTwoDecimalPlaces == false)
+{
+    throw new InvalidOperationException("Tax:GstPercentage must be configured between 0 and 100, with at most two decimal places.");
+}
+
+builder.Services.AddSingleton(taxSettings);
+
 // Application services: scoped, so one request shares one instance of each.
+builder.Services.AddScoped<TaxService>();
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<StoreService>();
 builder.Services.AddScoped<CategoryService>();

@@ -18,5 +18,7 @@ public interface IOrderRepository
 
     Task<decimal> GetSalesTotalBetweenAsync(int storeId, DateTime fromUtc, DateTime toUtc);
 
+    Task<decimal> GetGstTotalBetweenAsync(int storeId, DateTime fromUtc, DateTime toUtc);
+
     Task<int> GetOrderCountBetweenAsync(int storeId, DateTime fromUtc, DateTime toUtc);
 }

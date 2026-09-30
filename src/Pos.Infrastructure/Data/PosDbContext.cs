@@ -124,6 +124,19 @@ public class PosDbContext : DbContext
             .OnDelete(DeleteBehavior.Restrict);
 
         modelBuilder.Entity<Order>()
+            .Property(order => order.Subtotal)
+            .HasPrecision(18, 2);
+
+        // A percentage such as 18.00 needs five digits with two after the point.
+        modelBuilder.Entity<Order>()
+            .Property(order => order.GstPercentage)
+            .HasPrecision(5, 2);
+
+        modelBuilder.Entity<Order>()
+            .Property(order => order.GstAmount)
+            .HasPrecision(18, 2);
+
+        modelBuilder.Entity<Order>()
             .Property(order => order.Total)
             .HasPrecision(18, 2);
 

@@ -12,6 +12,12 @@ public class OrderResponse
 
     public string PaymentMethod { get; set; } = string.Empty;
 
+    public decimal Subtotal { get; set; }
+
+    public decimal GstPercentage { get; set; }
+
+    public decimal GstAmount { get; set; }
+
     public decimal Total { get; set; }
 
     public decimal? AmountTendered { get; set; }

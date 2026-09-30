@@ -22,11 +22,14 @@ public class ReportServiceTests
     }
 
     [Fact]
-    public async Task GetTodaysSalesSummaryAsync_returns_the_total_and_count_the_repository_computed_for_the_store()
+    public async Task GetTodaysSalesSummaryAsync_returns_the_total_the_gst_and_the_count_the_repository_computed_for_the_store()
     {
         _orderRepository
             .Setup(repository => repository.GetSalesTotalBetweenAsync(2, It.IsAny<DateTime>(), It.IsAny<DateTime>()))
             .ReturnsAsync(570m);
+        _orderRepository
+            .Setup(repository => repository.GetGstTotalBetweenAsync(2, It.IsAny<DateTime>(), It.IsAny<DateTime>()))
+            .ReturnsAsync(86.95m);
         _orderRepository
             .Setup(repository => repository.GetOrderCountBetweenAsync(2, It.IsAny<DateTime>(), It.IsAny<DateTime>()))
             .ReturnsAsync(3);
@@ -34,6 +37,7 @@ public class ReportServiceTests
         SalesSummaryResponse summary = await _reportService.GetTodaysSalesSummaryAsync(2);
 
         Assert.Equal(570m, summary.TotalSales);
+        Assert.Equal(86.95m, summary.GstCollected);
         Assert.Equal(3, summary.OrderCount);
         Assert.Equal(DateTime.UtcNow.Date, summary.DayStartUtc);
     }

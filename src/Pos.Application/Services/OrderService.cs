@@ -17,17 +17,19 @@ public class OrderService
     private readonly ILogger<OrderService> _logger;
     private readonly INotificationMessagePublisher _notificationMessagePublisher;
     private readonly IUserRepository _userRepository;
+    private readonly TaxService _taxService;
 
-    public OrderService(IOrderRepository orderRepository, IProductRepository productRepository, ILogger<OrderService> logger, INotificationMessagePublisher notificationMessagePublisher, IUserRepository userRepository)
+    public OrderService(IOrderRepository orderRepository, IProductRepository productRepository, ILogger<OrderService> logger, INotificationMessagePublisher notificationMessagePublisher, IUserRepository userRepository, TaxService taxService)
     {
         _userRepository = userRepository;
+        _taxService = taxService;
         _logger = logger;
         _notificationMessagePublisher = notificationMessagePublisher;
         _orderRepository = orderRepository;
         _productRepository = productRepository;
     }
 
-    // Order of work: check and price every line -> check the cash covers the total -> reduce stock -> one save. Nothing is written before every check passes.
+    // Order of work: check and price every line -> add the GST -> check the cash covers the total -> reduce stock -> one save. Nothing is written before every check passes.
     public async Task<OrderResponse> PlaceOrderAsync(PlaceOrderRequest placeOrderRequest, int currentUserId, UserRole currentUserRole, int storeId)
     {
         HashSet<int> productIdsSeen = new HashSet<int>();
@@ -83,6 +85,9 @@ public class OrderService
             Status = startingStatus,
             PaymentMethod = placeOrderRequest.PaymentMethod.Value,
             AmountTendered = placeOrderRequest.AmountTendered,
+            Subtotal = 0,
+            GstPercentage = _taxService.GetGstPercentage(),
+            GstAmount = 0,
             Total = 0
         };
 
@@ -109,10 +114,14 @@ public class OrderService
                 Quantity = orderItemRequest.Quantity
             };
             newOrder.Items.Add(orderItem);
-            newOrder.Total = newOrder.Total + productForItem.Price * orderItemRequest.Quantity;
+            newOrder.Subtotal = newOrder.Subtotal + productForItem.Price * orderItemRequest.Quantity;
         }
 
-        // The total is only known once every line is priced, and stock must not move for a sale the cash does not cover.
+        // Requirement 60: the GST is worked out on the subtotal and rounded to the paisa, and the customer pays both.
+        newOrder.GstAmount = _taxService.CalculateGst(newOrder.Subtotal);
+        newOrder.Total = newOrder.Subtotal + newOrder.GstAmount;
+
+        // The total, GST included, is only known once every line is priced, and stock must not move for a sale the cash does not cover.
         if (placeOrderRequest.AmountTendered != null)
         {
             bool coversTheTotal = placeOrderRequest.AmountTendered.Value >= newOrder.Total;
@@ -291,6 +300,9 @@ public class OrderService
             PlacedAt = DateTime.SpecifyKind(order.PlacedAt, DateTimeKind.Utc),
             Status = order.Status.ToString(),
             PaymentMethod = order.PaymentMethod.ToString(),
+            Subtotal = order.Subtotal,
+            GstPercentage = order.GstPercentage,
+            GstAmount = order.GstAmount,
             Total = order.Total,
             AmountTendered = order.AmountTendered,
             ChangeDue = changeDue,

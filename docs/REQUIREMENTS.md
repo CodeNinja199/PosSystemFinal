@@ -149,7 +149,7 @@ Status codes used everywhere: 200 for a read or an update that returns data, 201
 
 ## GST and discount
 
-Written before the code, as this document is meant to be, and **not built yet**: nothing in requirements 58 to 62 exists in the API or the web app today. GST - requirements 58 and 60 to 62 - comes first; the discount, requirement 59, stays unbuilt after that, and until it is built no order has a discount and the pricing below simply skips that step. Two clauses elsewhere wait with this section - requirement 23's cart subtotal and requirement 34's GST collected.
+GST - requirements 58 and 60 to 62 - is built. The discount, requirement 59, is written but **not built yet**; until it is, no order has a discount and the pricing below simply skips that step.
 
 58. Every sale is charged GST at one rate for the whole system, because GST is set nationally and is the same in every store. The rate lives in configuration (`Tax:GstPercentage`, 18 today), so a change of rate is a settings change rather than a code change, and it cannot be changed through the app. Any logged-in user can read it, because the checkout screen shows the GST before the sale is made.
     - a. The POS API refuses to start when the rate is missing, outside 0 to 100, or has more than two decimal places, rather than charge the wrong tax or store a different rate from the one charged.

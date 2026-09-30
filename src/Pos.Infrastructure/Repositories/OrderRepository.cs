@@ -69,6 +69,16 @@ public class OrderRepository : IOrderRepository
         return salesTotal;
     }
 
+    // The same orders as the sales total - this store, this window, not cancelled - so the GST is always part of that total.
+    public async Task<decimal> GetGstTotalBetweenAsync(int storeId, DateTime fromUtc, DateTime toUtc)
+    {
+        decimal gstTotal = await _context.Orders
+            .Where(order => order.StoreId == storeId && order.PlacedAt >= fromUtc && order.PlacedAt < toUtc && order.Status != OrderStatus.Cancelled)
+            .SumAsync(order => order.GstAmount);
+
+        return gstTotal;
+    }
+
     public async Task<int> GetOrderCountBetweenAsync(int storeId, DateTime fromUtc, DateTime toUtc)
     {
         int orderCount = await _context.Orders

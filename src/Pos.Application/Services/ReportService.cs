@@ -23,12 +23,14 @@ public class ReportService
         DateTime dayEndUtc = dayStartUtc.AddDays(1);
 
         decimal totalSales = await _orderRepository.GetSalesTotalBetweenAsync(storeId, dayStartUtc, dayEndUtc);
+        decimal gstCollected = await _orderRepository.GetGstTotalBetweenAsync(storeId, dayStartUtc, dayEndUtc);
         int orderCount = await _orderRepository.GetOrderCountBetweenAsync(storeId, dayStartUtc, dayEndUtc);
 
         SalesSummaryResponse salesSummary = new SalesSummaryResponse
         {
             DayStartUtc = dayStartUtc,
             TotalSales = totalSales,
+            GstCollected = gstCollected,
             OrderCount = orderCount
         };
 
